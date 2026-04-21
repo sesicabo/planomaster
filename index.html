@@ -6,12 +6,12 @@
     <title>Gerador de Planos de Aula - SESI</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
     <div class="container">
         <fieldset>
             <legend>Cabeçalho do Documento</legend>
-            
             <div class="grid-2">
                 <div class="form-group">
                     <label>Unidade Escolar:</label>
@@ -22,7 +22,6 @@
                     <input type="text" id="professor" value="Victor Roberto">
                 </div>
             </div>
-
             <div class="grid-2">
                 <div class="form-group">
                     <label>Área de conhecimento:</label>
@@ -33,7 +32,6 @@
                     <input type="text" id="turma" placeholder="Ex: 1º ANO (B)">
                 </div>
             </div>
-
             <div class="grid-3">
                 <div class="form-group">
                     <label>Bimestre:</label>
@@ -53,7 +51,6 @@
                     <input type="date" id="data-fim">
                 </div>
             </div>
-
             <div class="form-group">
                 <label>Capítulo / Referência:</label>
                 <input type="text" id="capitulo" placeholder="Ex: CADERNO 1 – CAPÍTULO 4">
@@ -62,28 +59,25 @@
 
         <fieldset class="pdf-section">
             <legend>Material Didático (PDF)</legend>
-            <p style="font-size: 0.9em; color: #555; margin-top: 0;">Anexe o PDF do capítulo para que a IA leia e sugira os temas das aulas automaticamente.</p>
+            <p style="font-size: 0.9em; color: #555; margin-top: 0;">Anexe o PDF do capítulo para que a IA extraia os temas automaticamente.</p>
             <div class="form-group">
                 <input type="file" id="pdf-upload" accept="application/pdf">
                 <button onclick="extrairTemasPDF()" class="btn-secondary" id="btn-extrair">📄 Extrair Assuntos do PDF</button>
             </div>
             <div id="status-extracao" style="font-size: 0.9em; color: var(--primary-color); font-weight: bold;"></div>
-            
             <datalist id="lista-temas-sugeridos"></datalist>
         </fieldset>
 
         <fieldset>
             <legend>Base Curricular</legend>
             <div class="form-group" style="margin-bottom: 0;">
-                <label>Habilidades da BNCC/SESI (Cole aqui os códigos e textos exatos):</label>
+                <label>Habilidades da BNCC/SESI:</label>
                 <textarea id="habilidades" rows="4" placeholder="Ex: SESI.EM13CHS101.d.3 : Identificar os processos histórico-sociais..."></textarea>
             </div>
         </fieldset>
 
         <fieldset>
             <legend>Horário Semanal (Dias de aula nesta turma)</legend>
-            <p style="font-size: 0.9em; color: #555; margin-top: 0;">Selecione os dias da semana e a carga horária correspondente para esta turma.</p>
-            
             <div class="dias-semana-avancado">
                 <div class="dia-row"><label class="check-container"><input type="checkbox" value="1" class="dia-chk" onchange="toggleDuracao(this, 1)"> Segunda-feira</label><select id="duracao-1" class="select-duracao" disabled><option value="50">50 minutos (1 aula)</option><option value="100">100 minutos (2 aulas)</option></select></div>
                 <div class="dia-row"><label class="check-container"><input type="checkbox" value="2" class="dia-chk" onchange="toggleDuracao(this, 2)"> Terça-feira</label><select id="duracao-2" class="select-duracao" disabled><option value="50">50 minutos (1 aula)</option><option value="100">100 minutos (2 aulas)</option></select></div>
@@ -91,22 +85,26 @@
                 <div class="dia-row"><label class="check-container"><input type="checkbox" value="4" class="dia-chk" onchange="toggleDuracao(this, 4)"> Quinta-feira</label><select id="duracao-4" class="select-duracao" disabled><option value="50">50 minutos (1 aula)</option><option value="100">100 minutos (2 aulas)</option></select></div>
                 <div class="dia-row"><label class="check-container"><input type="checkbox" value="5" class="dia-chk" onchange="toggleDuracao(this, 5)"> Sexta-feira</label><select id="duracao-5" class="select-duracao" disabled><option value="50">50 minutos (1 aula)</option><option value="100">100 minutos (2 aulas)</option></select></div>
             </div>
-
             <button onclick="gerarCamposDeAula()" class="btn-secondary">📅 Gerar Datas de Aula Automaticamente</button>
         </fieldset>
 
         <fieldset id="sessao-temas" style="display: none;">
             <legend>Temas e Metodologias das Aulas</legend>
-            <p style="font-size: 0.9em; color: #555; margin-top: 0;">Clique na caixa de tema para ver as sugestões do PDF ou digite.</p>
             <div id="aulas-container"></div>
             <button onclick="gerarPlano()" class="btn-primary" id="btn-gerar">🤖 Gerar Plano de Aula Completo com IA</button>
         </fieldset>
 
         <fieldset class="output-section" id="sessao-resultado" style="display: none;">
             <legend>Plano de Aula Gerado</legend>
-            <div id="resultado-plano"></div>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                <button onclick="exportarParaPDF()" class="btn-success" id="btn-exportar" style="width: auto;">📥 Exportar Plano para PDF</button>
+            </div>
+            
+            <div id="container-impressao">
+                <div id="resultado-plano"></div>
+            </div>
         </fieldset>
     </div>
-    <script src="script.js?v=6"></script>
+    <script src="script.js?v=7"></script>
 </body>
 </html>
