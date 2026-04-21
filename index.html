@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Planos de Aula - SESI</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 </head>
 <body>
     <div class="container">
         <fieldset>
             <legend>Cabeçalho do Documento</legend>
+            
             <div class="grid-2">
                 <div class="form-group">
                     <label>Unidade Escolar:</label>
@@ -20,6 +22,7 @@
                     <input type="text" id="professor" value="Victor Roberto">
                 </div>
             </div>
+
             <div class="grid-2">
                 <div class="form-group">
                     <label>Área de conhecimento:</label>
@@ -30,6 +33,7 @@
                     <input type="text" id="turma" placeholder="Ex: 1º ANO (B)">
                 </div>
             </div>
+
             <div class="grid-3">
                 <div class="form-group">
                     <label>Bimestre:</label>
@@ -49,6 +53,7 @@
                     <input type="date" id="data-fim">
                 </div>
             </div>
+
             <div class="form-group">
                 <label>Capítulo / Referência:</label>
                 <input type="text" id="capitulo" placeholder="Ex: CADERNO 1 – CAPÍTULO 4">
@@ -92,7 +97,7 @@
 
         <fieldset id="sessao-temas" style="display: none;">
             <legend>Temas e Metodologias das Aulas</legend>
-            <p style="font-size: 0.9em; color: #555; margin-top: 0;">Clique na caixa de tema para ver as sugestões extraídas do seu PDF, ou digite um tema novo.</p>
+            <p style="font-size: 0.9em; color: #555; margin-top: 0;">Clique na caixa de tema para ver as sugestões do PDF ou digite.</p>
             <div id="aulas-container"></div>
             <button onclick="gerarPlano()" class="btn-primary" id="btn-gerar">🤖 Gerar Plano de Aula Completo com IA</button>
         </fieldset>
@@ -102,6 +107,6 @@
             <div id="resultado-plano"></div>
         </fieldset>
     </div>
-    <<script src="script.js?v=2"></script>
+    <script src="script.js?v=3"></script>
 </body>
 </html>
