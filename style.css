@@ -1,42 +1,32 @@
-/* =========================================================
-   VARIÁVEIS DE CORES INSTITUCIONAIS E FUNDO
-   ========================================================= */
 :root {
-    --primary-color: #0056b3; /* Azul escuro SESI */
+    --primary-color: #0056b3; 
     --border-color: #dcdcdc;
-    --bg-color: #f9f9f9;
+    --bg-color: #f4f7f6;
 }
 
-/* =========================================================
-   ESTRUTURA BÁSICA E FONTE
-   ========================================================= */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Arial', sans-serif; /* Fonte mais institucional */
     background-color: var(--bg-color);
-    color: #333;
+    color: #000;
     margin: 0;
     padding: 20px;
 }
 
 .container {
-    max-width: 1000px; /* Alargado um pouco para acomodar melhor os cartões duplos */
+    max-width: 1000px; 
     margin: 0 auto;
     background-color: #ffffff;
     padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* =========================================================
-   CAIXAS DE AGRUPAMENTO (FIELDSETS) E TÍTULOS
-   ========================================================= */
 fieldset {
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 4px;
     padding: 25px 20px 20px 20px;
     margin-bottom: 25px;
     background-color: #ffffff;
-    position: relative;
 }
 
 legend {
@@ -44,84 +34,26 @@ legend {
     font-weight: bold;
     font-size: 1.1em;
     background-color: #ffffff;
-    padding: 2px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 15px;
-    margin-left: -5px;
+    padding: 0 10px;
 }
 
-/* =========================================================
-   SISTEMA DE GRIDS PARA ALINHAR FORMULÁRIOS LADO A LADO
-   ========================================================= */
-.grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+.form-group { margin-bottom: 15px; }
+label { display: block; font-weight: bold; font-size: 0.9em; margin-bottom: 5px; color: #333; }
 
-.grid-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    font-weight: bold;
-    font-size: 0.9em;
-    margin-bottom: 5px;
-    color: #333;
-}
-
-/* =========================================================
-   CAMPOS DE TEXTO, SELEÇÃO E CALENDÁRIO
-   ========================================================= */
 input[type="text"], input[type="date"], select, textarea {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--border-color);
+    border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
-    font-size: 1em;
-    color: #555;
 }
 
-input[type="text"]:focus, input[type="date"]:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px rgba(0, 86, 179, 0.2);
-}
+.pdf-section { border-color: #0ea5e9; background-color: #f0f9ff; }
+.pdf-section legend { color: #0284c7; border-color: #0ea5e9; }
+input[type="file"] { background-color: #fff; padding: 8px; border: 1px dashed var(--primary-color); border-radius: 4px; width: 100%; cursor: pointer;}
 
-/* =========================================================
-   ÁREA DE UPLOAD DO PDF (AZULADA E TRACEJADA)
-   ========================================================= */
-.pdf-section {
-    border-color: #0ea5e9;
-    background-color: #f0f9ff;
-}
-
-.pdf-section legend {
-    color: #0284c7;
-    border-color: #0ea5e9;
-}
-
-input[type="file"] {
-    background-color: #fff;
-    padding: 8px;
-    border: 1px dashed var(--primary-color);
-    border-radius: 4px;
-    width: 100%;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-
-/* =========================================================
-   BOTÕES DE AÇÃO
-   ========================================================= */
 button {
     padding: 12px 20px;
     border: none;
@@ -131,148 +63,94 @@ button {
     font-size: 1em;
     transition: background 0.3s;
 }
-
-.btn-primary {
-    background-color: var(--primary-color);
-    color: white;
-    width: 100%;
-    margin-top: 15px;
-}
-
+.btn-primary { background-color: var(--primary-color); color: white; width: 100%; margin-top: 15px; }
 .btn-primary:hover { background-color: #004085; }
-
-.btn-secondary {
-    background-color: #e2e8f0;
-    color: #333;
-    width: 100%;
-}
-
+.btn-secondary { background-color: #e2e8f0; color: #333; width: 100%; }
 .btn-secondary:hover { background-color: #cbd5e1; }
+.btn-success { background-color: #198754; color: white; }
+.btn-success:hover { background-color: #146c43; }
 
-.btn-secondary:disabled {
-    cursor: not-allowed;
-    opacity: 0.7;
-}
+.dias-semana-avancado { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.dia-row { display: flex; align-items: center; background-color: #f8f9fa; padding: 10px 15px; border: 1px solid #e9ecef; }
+.check-container { width: 180px; margin: 0; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.select-duracao { width: 200px !important; padding: 6px 10px !important; }
+.select-duracao:disabled { background-color: #e9ecef; cursor: not-allowed; }
 
-/* =========================================================
-   HORÁRIO SEMANAL AVANÇADO (DIAS E DURAÇÃO)
-   ========================================================= */
-.dias-semana-avancado {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 15px;
-    margin-bottom: 20px;
-}
+.aula-item { background-color: #f8f9fa; padding: 15px; border-left: 4px solid var(--primary-color); margin-bottom: 15px; border-top: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd;}
+.aula-header { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; display: flex; justify-content: space-between; }
+.tag-duracao { font-size: 0.85em; color: #fff; background-color: #6c757d; padding: 3px 8px; border-radius: 4px; font-weight: normal; }
+.aula-controls { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
 
-.dia-row {
-    display: flex;
-    align-items: center;
-    background-color: #f8f9fa;
-    padding: 10px 15px;
-    border-radius: 5px;
-    border: 1px solid #e9ecef;
-}
-
-.check-container {
-    width: 180px;
-    margin: 0;
-    font-weight: normal;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-}
-
-.select-duracao {
-    width: 200px !important;
-    padding: 6px 10px !important;
-}
-
-.select-duracao:disabled {
-    background-color: #e9ecef;
-    cursor: not-allowed;
-}
 
 /* =========================================================
-   CARTÕES INDIVIDUAIS DE CADA AULA (ANTES DE GERAR)
+   NOVO DESIGN PADRÃO SESI (TABELA LIMPA PARA O PLANO)
    ========================================================= */
-.aula-item {
-    background-color: #f1f5f9;
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 5px solid var(--primary-color);
-    margin-bottom: 15px;
-}
-
-.aula-header {
-    font-weight: bold;
-    color: var(--primary-color);
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.tag-duracao {
-    font-size: 0.85em;
-    color: #fff;
-    background-color: #64748b;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-weight: normal;
-}
-
-.aula-controls {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 10px;
-}
-
-/* =========================================================
-   DESIGN PROFISSIONAL DO PLANO GERADO PELA IA
-   ========================================================= */
-.output-section {
-    margin-top: 30px;
-    border-color: var(--primary-color);
+#container-impressao {
+    font-family: 'Arial', sans-serif;
+    color: #000;
 }
 
 .cabecalho-institucional {
-    background-color: #ffffff;
-    padding: 20px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    margin-bottom: 25px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    line-height: 1.6;
+    border: 1px solid #000;
+    padding: 15px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+.cabecalho-institucional p { margin: 4px 0; font-size: 1em; }
+
+.titulo-sessao {
+    background-color: #f1f1f1;
+    border: 1px solid #000;
+    padding: 8px;
+    font-weight: bold;
+    margin: 15px 0 0 0;
+    border-bottom: none;
 }
 
-.cabecalho-institucional p { 
-    margin: 5px 0; 
-    font-size: 1.05em; 
-    color: #333;
+.habilidades-caixa {
+    border: 1px solid #000;
+    padding: 15px;
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    line-height: 1.5;
 }
 
-/* Card Exato do Design Solicitado (Lado a Lado) */
-.aula-gerada-card {
+/* Estrutura de Tabela para cada aula */
+.aula-linha {
     display: flex;
-    border: 1px solid #dcdcdc;
-    margin-bottom: 25px;
-    border-radius: 6px;
-    overflow: hidden;
-    background-color: #ffffff;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    border: 1px solid #000;
+    border-bottom: none; /* Evita borda dupla entre aulas */
+}
+.aula-linha:last-child {
+    border-bottom: 1px solid #000;
 }
 
-/* Coluna Esquerda do Card (Data, Tema, Objetivos e Botão) */
-.aula-gerada-esquerda {
+.aula-coluna-esq {
     width: 35%;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-right: 1px solid #dcdcdc;
+    padding: 15px;
+    border-right: 1px solid #000;
+    background-color: #fafafa;
     display: flex;
     flex-direction: column;
 }
+.aula-coluna-esq strong { color: #000; font-size: 1.05em;}
+.aula-coluna-esq p { margin: 8px 0; font-size: 0.95em;}
 
-.aula-gerada-esquerda h3 {
-    margin-top:
+.aula-coluna-dir {
+    width: 65%;
+    padding: 15px;
+}
+.aula-coluna-dir p { margin-top: 0; margin-bottom: 12px; font-size: 0.95em; line-height: 1.5; text-align: justify;}
+
+.btn-refazer {
+    background-color: #ffc107; 
+    color: #000;
+    border: 1px solid #cc9a06;
+    padding: 8px;
+    font-size: 0.85em;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+    margin-top: auto; 
+}
+.btn-refazer:hover { background-color: #e0a800; }
