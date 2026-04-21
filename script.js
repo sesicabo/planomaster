@@ -1,4 +1,4 @@
-// ATENÇÃO: Substitua pela sua chave do Google AI Studio (Cole exatamente entre as aspas)
+// A sua Chave API
 const API_KEY = 'AIzaSyDFwczNq_VH5nn3EJ7423Qdy-J51WkB-Dk'; 
 
 let temasSugeridosPDF = [];
@@ -22,7 +22,6 @@ function toggleOutraAbordagem(selectElement) {
     }
 }
 
-// NOVO CÉREBRO: Método Oficial Base64 (Suporta PDFs até 50MB) com formatação rigorosa
 async function extrairTemasPDF() {
     const fileInput = document.getElementById('pdf-upload');
     const statusDiv = document.getElementById('status-extracao');
@@ -44,15 +43,10 @@ async function extrairTemasPDF() {
     
     reader.onload = async function(event) {
         try {
-            // Pega apenas o código do arquivo
             const base64Data = event.target.result.split(',')[1];
-            
             const prompt = "Analise este material didático. Extraia uma lista com os principais assuntos e tópicos de História, Filosofia ou Sociologia presentes nele para servirem de tema de aula. Retorne APENAS os nomes dos tópicos separados por uma quebra de linha (Enter). Não escreva textos adicionais.";
-
-            // Limpa espaços em branco invisíveis que causam o Erro 404
             const cleanApiKey = API_KEY.trim();
 
-            // Formatação estritamente exigida pelo Google (camelCase)
             const requestBody = {
                 contents: [{
                     parts: [
@@ -67,13 +61,13 @@ async function extrairTemasPDF() {
                 }]
             };
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanApiKey}`, {
+            // CORREÇÃO: Usando o nome gemini-1.5-flash-latest
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${cleanApiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
             });
 
-            // Se o Google não aprovar (Erros 400, 403, 404), ele cai aqui e nos diz o porquê
             if (!response.ok) {
                 const erroServidor = await response.text();
                 throw new Error(`Google recusou o arquivo (Status ${response.status}). Detalhe: ${erroServidor}`);
@@ -83,16 +77,12 @@ async function extrairTemasPDF() {
             
             if (data.candidates && data.candidates.length > 0) {
                 const textoGerado = data.candidates[0].content.parts[0].text;
-                
-                // Limpa e salva os temas gerados
                 temasSugeridosPDF = textoGerado.split('\n').filter(tema => tema.trim() !== "");
                 
-                // Popula o datalist (Autocomplete)
                 const datalist = document.getElementById('lista-temas-sugeridos');
                 datalist.innerHTML = '';
                 temasSugeridosPDF.forEach(tema => {
                     const option = document.createElement('option');
-                    // Remove hífens ou asteriscos indesejados da lista da IA
                     option.value = tema.replace(/^[-*]\s*/, '').trim();
                     datalist.appendChild(option);
                 });
@@ -279,7 +269,8 @@ async function gerarPlano() {
 
     try {
         const cleanApiKey = API_KEY.trim();
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanApiKey}`, {
+        // CORREÇÃO: Usando o nome gemini-1.5-flash-latest também para gerar o plano final
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${cleanApiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
