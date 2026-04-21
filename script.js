@@ -1,4 +1,4 @@
-// ATENÇÃO: Cole sua CHAVE DO GROQ (começa com gsk_) aqui:
+// ATENÇÃO: Cole sua CHAVE DO GROQ aqui:
 const API_KEY = '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'; 
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
@@ -17,16 +17,11 @@ function toggleDuracao(checkbox, diaId) {
 
 function toggleOutraAbordagem(selectElement) {
     const inputOutra = selectElement.parentElement.nextElementSibling;
-    if (selectElement.value === "Outra") {
-        inputOutra.style.display = "block";
-    } else {
-        inputOutra.style.display = "none";
-    }
+    inputOutra.style.display = (selectElement.value === "Outra") ? "block" : "none";
 }
 
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
-    // Utilizando o modelo econômico e ultra-rápido do Groq
     const modelosDisponiveis = ['llama-3.1-8b-instant', 'gemma2-9b-it'];
     let erroFinal = "";
 
@@ -43,7 +38,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
                 body: JSON.stringify({
                     model: modelo, 
                     messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.5 // Equilíbrio perfeito entre objetividade e criatividade
+                    temperature: 0.4 
                 })
             });
 
@@ -65,9 +60,7 @@ async function extrairTemasPDF() {
     const statusDiv = document.getElementById('status-extracao');
     const btnExtrair = document.getElementById('btn-extrair');
 
-    if (fileInput.files.length === 0) {
-        return alert("Por favor, selecione um arquivo PDF primeiro.");
-    }
+    if (fileInput.files.length === 0) return alert("Selecione um arquivo PDF primeiro.");
 
     const file = fileInput.files[0];
     btnExtrair.disabled = true;
@@ -90,7 +83,7 @@ async function extrairTemasPDF() {
             }
 
             const textoFinal = textoExtraido.substring(0, 15000);
-            const prompt = `Analise o texto deste material didático abaixo. Extraia uma lista com os principais assuntos e tópicos presentes nele para servirem de tema de aula de Ciências Humanas. Retorne APENAS os nomes dos tópicos separados por uma quebra de linha (Enter). Não escreva textos adicionais.\n\nTEXTO:\n${textoFinal}`;
+            const prompt = `Analise o texto deste material didático. Extraia os principais tópicos para aulas de Ciências Humanas. Retorne APENAS os nomes separados por uma quebra de linha. NENHUM TEXTO A MAIS.\n\nTEXTO:\n${textoFinal}`;
 
             const textoGerado = await chamarInteligenciaArtificial(prompt, statusDiv);
             temasSugeridosPDF = textoGerado.split('\n').filter(tema => tema.trim() !== "");
@@ -104,8 +97,7 @@ async function extrairTemasPDF() {
             });
 
             statusDiv.style.color = "green";
-            statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} tópicos no material. Vá para o próximo passo.`;
-
+            statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} tópicos.`;
         } catch (error) {
             statusDiv.style.color = "red";
             statusDiv.innerText = `❌ Erro: ${error.message}`;
@@ -120,17 +112,13 @@ async function extrairTemasPDF() {
 function gerarCamposDeAula() {
     const dataInicioInput = document.getElementById('data-inicio').value;
     const dataFimInput = document.getElementById('data-fim').value;
-    
     if (!dataInicioInput || !dataFimInput) return alert("Preencha o Início e o Fim da Quinzena.");
 
-    const diasPermitidos = {};
     const checkboxes = document.querySelectorAll('.dia-chk:checked');
     if (checkboxes.length === 0) return alert("Selecione pelo menos um dia da semana.");
 
-    checkboxes.forEach(chk => {
-        const dia = parseInt(chk.value);
-        diasPermitidos[dia] = document.getElementById(`duracao-${dia}`).value; 
-    });
+    const diasPermitidos = {};
+    checkboxes.forEach(chk => { diasPermitidos[parseInt(chk.value)] = document.getElementById(`duracao-${chk.value}`).value; });
 
     const container = document.getElementById('aulas-container');
     container.innerHTML = ''; 
@@ -145,16 +133,15 @@ function gerarCamposDeAula() {
         <option value="Montessoriana">Montessoriana</option>
         <option value="Freiriana (Paulo Freire - Problematização)">Freiriana (Paulo Freire)</option>
         <option value="Histórico-Crítica">Histórico-Crítica</option>
-        <option value="Sala de Aula Invertida (Flipped Classroom)">Sala de Aula Invertida</option>
+        <option value="Sala de Aula Invertida">Sala de Aula Invertida</option>
         <option value="Rotação por Estações">Rotação por Estações</option>
         <option value="Júri Simulado / Debate Clássico">Júri Simulado / Debate Clássico</option>
-        <option value="Gamificação / Análise de Cultura Pop">Gamificação / Análise de Cultura Pop</option>
+        <option value="Gamificação / Cultura Pop">Gamificação / Cultura Pop</option>
         <option value="Outra">Outra (Personalizar...)</option>
     `;
 
     while (dataAtual <= dataLimite) {
         let diaDaSemana = dataAtual.getDay();
-        
         if (diasPermitidos.hasOwnProperty(diaDaSemana)) {
             const dataFormatada = dataAtual.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
             const tempoAula = diasPermitidos[diaDaSemana];
@@ -164,19 +151,13 @@ function gerarCamposDeAula() {
             div.id = `aula-input-box-${contadorAulas}`;
             
             div.innerHTML = `
-                <div class="aula-header">
-                    <span>Aula ${contadorAulas} (${dataFormatada})</span>
-                    <span class="tag-duracao">${tempoAula} minutos</span>
-                </div>
+                <div class="aula-header"><span>Aula ${contadorAulas} (${dataFormatada})</span><span class="tag-duracao">${tempoAula} min</span></div>
                 <input type="hidden" class="data-aula" value="${dataFormatada}">
                 <input type="hidden" class="tempo-aula" value="${tempoAula}">
                 <input type="hidden" class="numero-aula" value="${contadorAulas}">
-                
                 <div class="aula-controls">
-                    <input type="text" class="tema-aula" list="lista-temas-sugeridos" placeholder="Clique para ver sugestões do PDF ou digite">
-                    <select class="abordagem-aula" onchange="toggleOutraAbordagem(this)">
-                        ${opcoesAbordagem}
-                    </select>
+                    <input type="text" class="tema-aula" list="lista-temas-sugeridos" placeholder="Clique ou digite o tema">
+                    <select class="abordagem-aula" onchange="toggleOutraAbordagem(this)">${opcoesAbordagem}</select>
                 </div>
                 <input type="text" class="abordagem-outra-aula" placeholder="Digite qual será a abordagem..." style="display: none; margin-top: 10px; width: 100%;">
             `;
@@ -185,9 +166,18 @@ function gerarCamposDeAula() {
         }
         dataAtual.setDate(dataAtual.getDate() + 1);
     }
-
-    if (contadorAulas === 1) alert("Nenhuma aula encontrada para esses dias.");
+    if (contadorAulas === 1) alert("Nenhuma aula para esses dias.");
     else document.getElementById('sessao-temas').style.display = 'block';
+}
+
+// O EXTRATOR CIRÚRGICO: Deleta o "lixo" que a IA inventar antes ou depois do HTML
+function limparMarkdownHTML(textoOriginal) {
+    const inicio = textoOriginal.indexOf('<div class="aula-linha"');
+    const fim = textoOriginal.lastIndexOf('</div>');
+    if (inicio !== -1 && fim !== -1) {
+        return textoOriginal.substring(inicio, fim + 6); // Pega APENAS o HTML puro
+    }
+    return textoOriginal;
 }
 
 async function gerarPlano() {
@@ -199,7 +189,7 @@ async function gerarPlano() {
     const dataInicio = document.getElementById('data-inicio').value;
     const dataFim = document.getElementById('data-fim').value;
     const capitulo = document.getElementById('capitulo').value;
-    const habilidades = document.getElementById('habilidades').value;
+    const habilidades = document.getElementById('habilidades').value.replace(/\n/g, '<br>');
     
     let periodoTexto = (dataInicio && dataFim) ? `${formatarDataBR(dataInicio)} à ${formatarDataBR(dataFim)}` : "";
 
@@ -216,10 +206,7 @@ async function gerarPlano() {
         if (abordagem === "Outra") abordagem = el.querySelector('.abordagem-outra-aula').value;
 
         if(tema) {
-            cronogramaDetalhado += `
-            [INÍCIO DA AULA ID: ${id}]
-            Data: ${data} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem}
-            [FIM DA AULA ID: ${id}]\n`;
+            cronogramaDetalhado += `[AULA ID: ${id}] Data: ${data} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem}\n`;
             temasPreenchidos = true;
         }
     });
@@ -235,46 +222,56 @@ async function gerarPlano() {
 
     const cabecalhoHTML = `
         <div class="cabecalho-institucional">
-            <p><strong>Unidade Escolar:</strong> ${unidade}</p>
-            <p><strong>Professor:</strong> ${professor}</p>
-            <p><strong>Área de conhecimento:</strong> ${area}</p>
-            <p><strong>Série e Turma:</strong> ${turma}</p>
-            <p><strong>Bimestre:</strong> ${bimestre} | <strong>Período:</strong> ${periodoTexto}</p>
+            <div style="display: flex; justify-content: space-between;">
+                <p><strong>Unidade Escolar:</strong> ${unidade}</p>
+                <p><strong>Professor:</strong> ${professor}</p>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <p><strong>Área de conhecimento:</strong> ${area}</p>
+                <p><strong>Série e Turma:</strong> ${turma}</p>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <p><strong>Bimestre:</strong> ${bimestre}</p>
+                <p><strong>Período:</strong> ${periodoTexto}</p>
+            </div>
             <p><strong>Capítulo:</strong> ${capitulo}</p>
-            <p><strong>Habilidades:</strong> ${habilidades}</p>
         </div>
+        <div class="titulo-sessao">Habilidades:</div>
+        <div class="habilidades-caixa">${habilidades}</div>
+        <div class="titulo-sessao">Desenvolvimento da aula e recursos que serão utilizados:</div>
     `;
     
-    resultadoDiv.innerHTML = cabecalhoHTML + `<p style="text-align:center; color:#0056b3;">⏳ A Inteligência Artificial está escrevendo as aulas detalhadas...</p>`;
+    resultadoDiv.innerHTML = cabecalhoHTML + `<p style="text-align:center; padding:20px; color:#0056b3;">⏳ Escrevendo aulas de forma pedagógica e direta...</p>`;
 
-    const prompt = `Aja como um renomado Professor do SESI especialista em metodologias ativas. Baseado no cronograma abaixo, escreva o planejamento de CADA AULA.
+    const prompt = `Aja como um Professor do SESI. Escreva o plano para as aulas abaixo.
+    DIRETRIZ DE REDAÇÃO PEDAGÓGICA (MUITO IMPORTANTE): 
+    Não seja prolixo, mas não seja preguiçoso. Para CADA momento (Momento 1, 2 e 3), escreva pequenos parágrafos, contendo um conjunto de frases didáticas e objetivas. Descreva claramente a ação do professor e do aluno na sala de aula. Mostre como a "Abordagem" escolhida será aplicada.
     
-    MUITO IMPORTANTE SOBRE A REDAÇÃO: 
-    Para CADA MOMENTO da aula (Momento 1, 2 e 3), escreva textos sofisticados, didáticos e pedagógicos. Não seja preguiçoso na descrição, mas seja objetivo: use pequenos parágrafos ou um conjunto de frases curtas e diretas. Descreva claramente a ação do professor e do aluno, evidenciando como a "Abordagem Pedagógica" escolhida está sendo aplicada na prática em cada etapa da aula.
-    
-    CRONOGRAMA DE AULAS:
+    CRONOGRAMA:
     ${cronogramaDetalhado}
 
-    INSTRUÇÃO DE FORMATAÇÃO ESTRITA:
-    Você DEVE retornar a resposta EXATAMENTE no formato de código HTML abaixo para CADA aula do cronograma. NÃO use blocos de markdown (como \`\`\`html). Retorne apenas as tags HTML puras:
+    REGRAS DE FORMATAÇÃO ESTRITA:
+    Retorne EXATAMENTE no formato HTML abaixo. NÃO ESCREVA MENSAGENS ANTES OU DEPOIS. APENAS AS TAGS HTML PURAS PARA CADA AULA.
     
-    <div class="aula-gerada-card" id="resultado-aula-[ID DA AULA]">
-        <div class="aula-gerada-esquerda">
-            <h3>[DATA] - Aula [ID DA AULA]:<br>[TEMA]</h3>
-            <p><strong>Objetivos:</strong> [Escreva os objetivos de forma direta e pedagógica...]</p>
-            <button class="btn-refazer" onclick="refazerAula('[ID DA AULA]')">🔄 Refazer apenas esta aula</button>
+    <div class="aula-linha" id="resultado-aula-[ID]">
+        <div class="aula-coluna-esq">
+            <strong>[DATA] - Aula [ID]:</strong><br>
+            [TEMA]<br><br>
+            <strong>Objetivos:</strong><br>
+            <p>[Objetivos diretos...]</p>
+            <button class="btn-refazer" onclick="refazerAula('[ID]')">🔄 Refazer apenas esta aula</button>
         </div>
-        <div class="aula-gerada-direita">
-            <p><strong>Momento 1 - Acolhida/Provocação ([Tempo proporcional] min):</strong> [Descrição didática e objetiva...]</p>
-            <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo proporcional] min):</strong> [Descrição didática e objetiva...]</p>
-            <p><strong>Momento 3 - Evidência/Avaliação ([Tempo proporcional] min):</strong> [Descrição didática e objetiva...]</p>
+        <div class="aula-coluna-dir">
+            <p><strong>Momento 1 - Acolhida/Provocação ([Tempo proporcional] min):</strong> [Sua descrição didática e focada na ação do aluno e professor...]</p>
+            <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo proporcional] min):</strong> [Sua descrição didática e focada na ação do aluno e professor...]</p>
+            <p><strong>Momento 3 - Evidência/Avaliação ([Tempo proporcional] min):</strong> [Sua descrição didática e focada na ação do aluno e professor...]</p>
         </div>
     </div>`;
 
     try {
         const textoGerado = await chamarInteligenciaArtificial(prompt, null);
-        const htmlLimpo = textoGerado.replace(/```html/gi, '').replace(/```/gi, '').trim();
-        resultadoDiv.innerHTML = cabecalhoHTML + htmlLimpo;
+        const htmlFiltrado = limparMarkdownHTML(textoGerado); // O Extrator Cirúrgico corta fora o "Aula ID: X"
+        resultadoDiv.innerHTML = cabecalhoHTML + htmlFiltrado;
     } catch (error) {
         resultadoDiv.innerHTML = cabecalhoHTML + `<p style="color:red;">Erro ao gerar: ${error.message}</p>`;
     } finally {
@@ -283,12 +280,9 @@ async function gerarPlano() {
     }
 }
 
-// ==========================================
-// FUNÇÃO MÁGICA: REFAZER UMA ÚNICA AULA
-// ==========================================
 window.refazerAula = async function(idAula) {
     const inputBox = document.getElementById(`aula-input-box-${idAula}`);
-    if(!inputBox) return alert("Erro: Dados originais da aula não encontrados na tela.");
+    if(!inputBox) return alert("Dados originais não encontrados.");
     
     const data = inputBox.querySelector('.data-aula').value;
     const tempo = inputBox.querySelector('.tempo-aula').value;
@@ -304,35 +298,62 @@ window.refazerAula = async function(idAula) {
     btn.innerText = "⏳ Refazendo texto... Aguarde";
     btn.disabled = true;
 
-    const prompt = `Aja como um renomado Professor do SESI. Reescreva o planejamento APENAS desta aula específica para melhorar a qualidade didática do texto.
+    const prompt = `Reescreva o planejamento APENAS desta aula para melhorar a qualidade pedagógica.
+    AULA: ID ${idAula} | Data: ${data} | Tema: ${tema} | Duração: ${tempo} min | Abordagem Exigida: ${abordagem}
     
-    DADOS DA AULA:
-    ID: ${idAula} | Data: ${data} | Tema: ${tema} | Duração: ${tempo} min | Abordagem Exigida: ${abordagem}
+    DIRETRIZ DE REDAÇÃO: Escreva um pequeno parágrafo didático e objetivo para cada momento, descrevendo as ações em sala de aula de acordo com a abordagem.
     
-    INSTRUÇÃO DE REDAÇÃO: 
-    Para CADA MOMENTO da aula (Momento 1, 2 e 3), escreva textos sofisticados, didáticos e pedagógicos. Não seja preguiçoso na descrição, mas seja objetivo: use pequenos parágrafos ou um conjunto de frases curtas e diretas. Descreva claramente a ação do professor e do aluno, evidenciando como a "Abordagem Pedagógica" exigida está sendo aplicada na prática.
-    
-    Retorne EXATAMENTE neste código HTML (sem usar \`\`\`html):
-    <div class="aula-gerada-card" id="resultado-aula-${idAula}">
-        <div class="aula-gerada-esquerda">
-            <h3>${data} - Aula ${idAula}:<br>${tema}</h3>
-            <p><strong>Objetivos:</strong> [Escreva os objetivos de forma direta e pedagógica...]</p>
+    FORMATO OBRIGATÓRIO (RETORNE APENAS ISSO):
+    <div class="aula-linha" id="resultado-aula-${idAula}">
+        <div class="aula-coluna-esq">
+            <strong>${data} - Aula ${idAula}:</strong><br>
+            ${tema}<br><br>
+            <strong>Objetivos:</strong><br>
+            <p>[Objetivos...]</p>
             <button class="btn-refazer" onclick="refazerAula('${idAula}')">🔄 Refazer apenas esta aula</button>
         </div>
-        <div class="aula-gerada-direita">
-            <p><strong>Momento 1 - Acolhida/Provocação ([Tempo proporcional] min):</strong> [Descrição didática e objetiva...]</p>
-            <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo proporcional] min):</strong> [Descrição didática e objetiva...]</p>
-            <p><strong>Momento 3 - Evidência/Avaliação ([Tempo proporcional] min):</strong> [Descrição didática e objetiva...]</p>
+        <div class="aula-coluna-dir">
+            <p><strong>Momento 1 - Acolhida/Provocação ([Tempo proporcional] min):</strong> [Descrição didática...]</p>
+            <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo proporcional] min):</strong> [Descrição didática...]</p>
+            <p><strong>Momento 3 - Evidência/Avaliação ([Tempo proporcional] min):</strong> [Descrição didática...]</p>
         </div>
     </div>`;
 
     try {
         const textoGerado = await chamarInteligenciaArtificial(prompt, null);
-        const htmlLimpo = textoGerado.replace(/```html/gi, '').replace(/```/gi, '').trim();
-        cardElement.outerHTML = htmlLimpo; 
+        const htmlFiltrado = limparMarkdownHTML(textoGerado);
+        cardElement.outerHTML = htmlFiltrado; 
     } catch(e) {
         alert("Erro ao refazer a aula: " + e.message);
         btn.innerText = oldText;
         btn.disabled = false;
     }
+}
+
+// NOVA FUNÇÃO: GERAR PDF DO PLANO PERFEITO
+function exportarParaPDF() {
+    const btnExportar = document.getElementById('btn-exportar');
+    btnExportar.innerText = "⏳ Preparando PDF...";
+    
+    const elementoParaImprimir = document.getElementById('container-impressao');
+    
+    // Esconde os botões amarelos de "Refazer Aula" para não saírem na impressão
+    const botoes = elementoParaImprimir.querySelectorAll('.btn-refazer');
+    botoes.forEach(btn => btn.style.display = 'none');
+
+    // Configurações do gerador de PDF
+    const configuracao = {
+        margin:       10, // Margem de 10mm (1cm)
+        filename:     'Plano_de_Aula_SESI.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 }, // Deixa o texto bem nítido
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Gera e salva o PDF
+    html2pdf().set(configuracao).from(elementoParaImprimir).save().then(() => {
+        // Mostra os botões novamente após o download
+        botoes.forEach(btn => btn.style.display = 'block');
+        btnExportar.innerText = "📥 Exportar Plano para PDF";
+    });
 }
