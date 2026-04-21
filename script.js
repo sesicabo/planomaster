@@ -22,7 +22,7 @@ function toggleOutraAbordagem(selectElement) {
 
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
-    const modelosDisponiveis = ['llama-3.1-8b-instant', 'gemma2-9b-it'];
+    const modelosDisponiveis = ['llama-3.1-8b-instant', 'llama3-8b-8192'];
     let erroFinal = "";
 
     for (const modelo of modelosDisponiveis) {
@@ -40,8 +40,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
                 body: JSON.stringify({
                     model: modelo, 
                     messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.4,
-                    max_tokens: 3000 // Força a IA a usar um limite maior se precisar
+                    temperature: 0.5 
                 })
             });
 
@@ -69,7 +68,7 @@ async function extrairTemasPDF() {
     btnExtrair.disabled = true;
     btnExtrair.innerText = "Lendo texto do material... (Aguarde)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Processando o arquivo internamente...";
+    statusDiv.innerText = "Processando as páginas do arquivo...";
 
     const reader = new FileReader();
     reader.onload = async function(event) {
@@ -78,15 +77,31 @@ async function extrairTemasPDF() {
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
             let textoExtraido = "";
 
+            // LEITURA DINÂMICA: Pega o resumo (topo) de TODAS as páginas para não perder nenhum assunto
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const textContent = await page.getTextContent();
                 const pageText = textContent.items.map(item => item.str).join(' ');
-                textoExtraido += pageText + "\n";
+                // Extrai apenas os primeiros 1000 caracteres de cada página (onde ficam os títulos)
+                textoExtraido += `[PÁGINA ${i}] ` + pageText.substring(0, 1000) + "\n";
             }
 
-            const textoFinal = textoExtraido.substring(0, 15000);
-            const prompt = `Analise o texto deste material didático. Extraia os principais tópicos para aulas de Ciências Humanas. Retorne APENAS os nomes separados por uma quebra de linha. NENHUM TEXTO A MAIS.\n\nTEXTO:\n${textoFinal}`;
+            // Limite de segurança que passa tranquilo na API do Groq
+            const textoFinal = textoExtraido.substring(0, 40000);
+            
+            // PROMPT COORDENADOR: Exige temas sofisticados
+            const prompt = `Atue como um Coordenador Pedagógico de Ciências Humanas (História, Filosofia, Sociologia).
+            Abaixo estão os trechos principais de cada página de um capítulo de material didático.
+            Sua missão é mapear os assuntos do capítulo inteiro e criar uma lista de TEMAS DE AULA.
+            
+            REGRAS OBRIGATÓRIAS:
+            1. NÃO crie temas rasos, curtos ou genéricos (Exemplo ruim: "Idade Média" ou "Roma").
+            2. CRIE temas compostos, abrangentes e sofisticados, que evidenciem a complexidade da aula (Exemplo bom: "Idade Média: Sociedade, Cultura e Religiosidade" ou "Império Romano: Da Monarquia à República e as Lutas Sociais").
+            3. Cubra todo o conteúdo do texto (da página 1 até a última).
+            4. Retorne APENAS a lista com os nomes dos temas, um por linha. Não use asteriscos, números ou traços no início. Não escreva textos adicionais.
+            
+            TEXTO DO MATERIAL:
+            ${textoFinal}`;
 
             const textoGerado = await chamarInteligenciaArtificial(prompt, statusDiv);
             temasSugeridosPDF = textoGerado.split('\n').filter(tema => tema.trim() !== "");
@@ -94,13 +109,14 @@ async function extrairTemasPDF() {
             const datalist = document.getElementById('lista-temas-sugeridos');
             datalist.innerHTML = '';
             temasSugeridosPDF.forEach(tema => {
+                // Limpa marcações que a IA possa tentar colocar
                 const option = document.createElement('option');
-                option.value = tema.replace(/^[-*]\s*/, '').trim();
+                option.value = tema.replace(/^[-*0-9.)]+\s*/, '').replace(/[\*\_]/g, '').trim();
                 datalist.appendChild(option);
             });
 
             statusDiv.style.color = "green";
-            statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} tópicos.`;
+            statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} temas abrangentes e complexos em todo o capítulo.`;
         } catch (error) {
             statusDiv.style.color = "red";
             statusDiv.innerText = `❌ Erro: ${error.message}`;
@@ -182,7 +198,6 @@ function limparMarkdownHTML(textoOriginal) {
     return textoOriginal;
 }
 
-// O NOVO CÉREBRO: GERA AULA POR AULA (EVITA CORTES E FALTA DE FÔLEGO DA IA)
 async function gerarPlano() {
     const unidade = document.getElementById('unidade').value;
     const professor = document.getElementById('professor').value;
@@ -199,7 +214,6 @@ async function gerarPlano() {
     const aulasInputs = document.querySelectorAll('.aula-item');
     let temasPreenchidos = false;
 
-    // Verifica se há pelo menos um tema preenchido
     aulasInputs.forEach((el) => {
         if(el.querySelector('.tema-aula').value) temasPreenchidos = true;
     });
@@ -212,7 +226,6 @@ async function gerarPlano() {
 
     btn.disabled = true;
 
-    // Monta o Cabeçalho
     const cabecalhoHTML = `
         <div class="cabecalho-institucional">
             <div style="display: flex; justify-content: space-between;">
@@ -238,7 +251,6 @@ async function gerarPlano() {
     resultadoDiv.innerHTML = cabecalhoHTML;
     const containerAulas = document.getElementById('container-aulas-geradas');
 
-    // LINHA DE MONTAGEM: Processa cada aula individualmente!
     for (const el of aulasInputs) {
         const id = el.querySelector('.numero-aula').value;
         const data = el.querySelector('.data-aula').value;
@@ -247,11 +259,10 @@ async function gerarPlano() {
         let abordagem = el.querySelector('.abordagem-aula').value;
         if (abordagem === "Outra") abordagem = el.querySelector('.abordagem-outra-aula').value;
 
-        // Só gera se tiver tema preenchido
         if (tema) {
             btn.innerText = `⏳ Gerando Aula ${id}... (Aguarde)`;
             
-            const prompt = `Aja como um Professor do SESI. Escreva o plano APENAS para a aula solicitada abaixo.
+            const prompt = `Aja como um Professor de Ciências Humanas. Escreva o plano APENAS para a aula solicitada abaixo.
             
             DIRETRIZ DE REDAÇÃO PEDAGÓGICA: 
             Seja didático e objetivo. Escreva pequenos parágrafos, contendo frases diretas para os Momentos 1, 2 e 3. Descreva a ação do professor e do aluno. Mostre como a abordagem exigida será aplicada.
@@ -274,16 +285,16 @@ async function gerarPlano() {
                     <button class="btn-refazer" onclick="refazerAula('${id}')">🔄 Refazer apenas esta aula</button>
                 </div>
                 <div class="aula-coluna-dir">
-                    <p><strong>Momento 1 - Acolhida/Provocação ([Tempo proporcional] min):</strong> [Sua descrição didática e focada na ação do aluno e professor...]</p>
-                    <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo proporcional] min):</strong> [Sua descrição didática e focada na ação do aluno e professor...]</p>
-                    <p><strong>Momento 3 - Evidência/Avaliação ([Tempo proporcional] min):</strong> [Sua descrição didática e focada na ação do aluno e professor...]</p>
+                    <p><strong>Momento 1 - Acolhida/Provocação ([Tempo proporcional] min):</strong> [Sua descrição didática...]</p>
+                    <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo proporcional] min):</strong> [Sua descrição didática...]</p>
+                    <p><strong>Momento 3 - Evidência/Avaliação ([Tempo proporcional] min):</strong> [Sua descrição didática...]</p>
                 </div>
             </div>`;
 
             try {
                 const textoGerado = await chamarInteligenciaArtificial(prompt, null);
                 const htmlFiltrado = limparMarkdownHTML(textoGerado); 
-                containerAulas.innerHTML += htmlFiltrado; // Adiciona a aula gerada na tela
+                containerAulas.innerHTML += htmlFiltrado; 
             } catch (error) {
                 containerAulas.innerHTML += `<div class="aula-linha"><div class="aula-coluna-esq" style="color:red; width:100%;">Erro ao gerar a Aula ${id}: ${error.message}</div></div>`;
             }
