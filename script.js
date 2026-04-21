@@ -1,4 +1,5 @@
-const API_KEY = 'AIzaSyDFwczNq_VH5nn3EJ7423Qdy-J51WkB-Dk'; 
+// ATENÇÃO: Cole sua CHAVE NOVA (gerada em um "Novo Projeto") aqui:
+const API_KEY = 'AIzaSyDuNTW4HPxxBgN5pkXR166s-nSShe6tju0'; 
 
 let temasSugeridosPDF = [];
 
@@ -34,9 +35,9 @@ async function extrairTemasPDF() {
     const file = fileInput.files[0];
     
     btnExtrair.disabled = true;
-    btnExtrair.innerText = "Lendo PDF com Gemini PRO... (Pode levar até 1 minuto)";
+    btnExtrair.innerText = "Lendo material didático... (Aguarde)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Empacotando arquivo e enviando para a Inteligência Artificial...";
+    statusDiv.innerText = "Enviando arquivo para análise da Inteligência Artificial...";
 
     const reader = new FileReader();
     
@@ -60,8 +61,8 @@ async function extrairTemasPDF() {
                 }]
             };
 
-            // MUDANÇA CRUCIAL: Usando o gemini-1.5-pro-latest (O melhor para PDFs)
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${cleanApiKey}`, {
+            // Usando o modelo padrão oficial para leitura de PDFs
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanApiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
@@ -69,7 +70,11 @@ async function extrairTemasPDF() {
 
             if (!response.ok) {
                 const erroServidor = await response.text();
-                throw new Error(`Google recusou o arquivo (Status ${response.status}). Detalhe: ${erroServidor}`);
+                // Se der erro 404, avisa o professor sobre a chave
+                if (response.status === 404) {
+                    throw new Error("Sua Chave da API não tem permissão para os modelos novos. Gere uma nova chave em 'New Project' no Google AI Studio.");
+                }
+                throw new Error(`Erro na API (${response.status}): ${erroServidor}`);
             }
 
             const data = await response.json();
@@ -268,8 +273,7 @@ async function gerarPlano() {
 
     try {
         const cleanApiKey = API_KEY.trim();
-        // Usando o gemini-1.5-pro-latest também para gerar o plano final com máxima qualidade
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${cleanApiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanApiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
