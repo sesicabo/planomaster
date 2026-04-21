@@ -1,7 +1,6 @@
 // ATENÇÃO: Cole sua CHAVE DO GROQ (começa com gsk_) aqui:
 const API_KEY = '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'; 
 
-// Biblioteca para ler o PDF localmente
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
 let temasSugeridosPDF = [];
@@ -25,35 +24,51 @@ function toggleOutraAbordagem(selectElement) {
     }
 }
 
-// O NOVO CÉREBRO: Conexão com a API super-rápida do Groq (Modelo Mixtral)
+// CÉREBRO BLINDADO: Tenta os modelos mais novos do Groq automaticamente
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
-    if(statusDivElement) {
-        statusDivElement.innerText = `Conectando ao motor da IA (Groq Mixtral)...`;
-    }
-
     const cleanApiKey = API_KEY.trim();
+    
+    // Lista de motores hiper-rápidos e atualizados do Groq
+    const modelosDisponiveis = [
+        'llama-3.1-70b-versatile',
+        'llama3-70b-8192',
+        'llama3-8b-8192'
+    ];
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${cleanApiKey}`
-        },
-        body: JSON.stringify({
-            model: 'mixtral-8x7b-32768', // Modelo com memória gigante para suportar as 46 páginas
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.5
-        })
-    });
+    let erroFinal = "";
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erro no servidor da IA: ${errorText}`);
+    for (const modelo of modelosDisponiveis) {
+        try {
+            if(statusDivElement) {
+                statusDivElement.innerText = `Conectando ao motor da IA (${modelo})...`;
+            }
+
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${cleanApiKey}`
+                },
+                body: JSON.stringify({
+                    model: modelo, 
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.5
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return data.choices[0].message.content; // DEU CERTO!
+            } else {
+                erroFinal = await response.text();
+                console.warn(`Motor ${modelo} falhou ou foi aposentado. Tentando o próximo...`);
+            }
+        } catch (error) {
+            erroFinal = error.message;
+        }
     }
 
-    const data = await response.json();
-    // Retorna exatamente o texto gerado
-    return data.choices[0].message.content; 
+    throw new Error(`O servidor recusou todos os modelos. Detalhes: ${erroFinal}`);
 }
 
 async function extrairTemasPDF() {
@@ -77,7 +92,6 @@ async function extrairTemasPDF() {
     
     reader.onload = async function(event) {
         try {
-            // Extração de texto usando PDF.js no próprio navegador
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
             let textoExtraido = "";
@@ -89,12 +103,11 @@ async function extrairTemasPDF() {
                 textoExtraido += pageText + "\n";
             }
 
-            // O Mixtral suporta muito texto, mandamos até 100.000 caracteres tranquilos
-            const textoFinal = textoExtraido.substring(0, 100000);
+            // Limite de segurança de caracteres para os modelos Llama3
+            const textoFinal = textoExtraido.substring(0, 25000);
 
             const prompt = `Analise o texto deste material didático abaixo. Extraia uma lista com os principais assuntos e tópicos presentes nele para servirem de tema de aula de Ciências Humanas. Retorne APENAS os nomes dos tópicos separados por uma quebra de linha (Enter). Não escreva textos adicionais.\n\nTEXTO:\n${textoFinal}`;
 
-            // Chama o novo motor
             const textoGerado = await chamarInteligenciaArtificial(prompt, statusDiv);
             
             temasSugeridosPDF = textoGerado.split('\n').filter(tema => tema.trim() !== "");
