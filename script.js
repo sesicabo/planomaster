@@ -1,5 +1,5 @@
 // ATENÇÃO: Cole sua CHAVE DO GROQ aqui:
-const API_KEY = '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'; 
+const API_KEY = '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'; 
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
