@@ -1,7 +1,7 @@
-// ATENÇÃO: Cole sua CHAVE NOVA (gerada em "New Project") aqui:
+// ATENÇÃO: Cole sua CHAVE API AQUI
 const API_KEY = 'AIzaSyDuNTW4HPxxBgN5pkXR166s-nSShe6tju0'; 
 
-// Configura o motor de leitura do PDF.js
+// Configura o motor de leitura do PDF local
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
 let temasSugeridosPDF = [];
@@ -25,7 +25,56 @@ function toggleOutraAbordagem(selectElement) {
     }
 }
 
-// CÉREBRO DEFINITIVO: Extrai o texto localmente antes de enviar para a IA
+// ==========================================
+// O CÉREBRO BLINDADO COM AUTO-RECUPERAÇÃO
+// ==========================================
+async function chamarInteligenciaArtificial(prompt, statusDivElement) {
+    const cleanApiKey = API_KEY.trim();
+    const requestBody = {
+        contents: [{ parts: [{ text: prompt }] }]
+    };
+
+    // A MÁGICA: A lista de todos os motores. Se um falhar, tenta o próximo automaticamente.
+    const modelosDisponiveis = [
+        "gemini-1.5-flash", 
+        "gemini-pro",        // O gemini-pro é garantido que funciona em 100% das contas
+        "gemini-1.5-pro"
+    ];
+
+    let erroFinal = "";
+
+    for (const modelo of modelosDisponiveis) {
+        try {
+            if(statusDivElement) {
+                statusDivElement.innerText = `Conectando ao motor da IA (${modelo})...`;
+            }
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${cleanApiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return data; // DEU CERTO! Retorna os dados e sai da função.
+            } else {
+                erroFinal = await response.text();
+                console.warn(`Motor ${modelo} bloqueado ou indisponível. Tentando o próximo...`);
+            }
+        } catch (error) {
+            erroFinal = error.message;
+        }
+    }
+
+    // Se o código chegar aqui, significa que a Google recusou todos.
+    throw new Error(`Falha crítica na API do Google. Detalhes: ${erroFinal}`);
+}
+
+
+// ==========================================
+// EXTRAÇÃO DE PDF LOCAL E SEGURA
+// ==========================================
 async function extrairTemasPDF() {
     const fileInput = document.getElementById('pdf-upload');
     const statusDiv = document.getElementById('status-extracao');
@@ -39,78 +88,63 @@ async function extrairTemasPDF() {
     const file = fileInput.files[0];
     
     btnExtrair.disabled = true;
-    btnExtrair.innerText = "Lendo páginas... (Passo 1/2)";
+    btnExtrair.innerText = "Lendo texto do material... (Aguarde)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Extraindo texto do material didático localmente (isso evita bloqueios de tamanho)...";
+    statusDiv.innerText = "Lendo o arquivo internamente (Isso evita limites de tamanho)...";
 
-    try {
-        // PASSO 1: Extrair o texto do PDF usando JavaScript no navegador
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-        let textoExtraido = "";
+    const reader = new FileReader();
+    
+    reader.onload = async function(event) {
+        try {
+            // Extração de texto usando PDF.js
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            let textoExtraido = "";
 
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map(item => item.str).join(' ');
-            textoExtraido += pageText + "\n";
-        }
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                textoExtraido += pageText + "\n";
+            }
 
-        // Limitamos a 80.000 caracteres para garantir uma resposta imediata e leve da API
-        const textoFinal = textoExtraido.substring(0, 80000);
+            // Cortamos o texto para caber em qualquer motor com segurança (aprox. 10.000 palavras)
+            const textoFinal = textoExtraido.substring(0, 60000);
 
-        statusDiv.innerText = "Passo 2/2: Texto extraído! Solicitando os assuntos à Inteligência Artificial...";
-        btnExtrair.innerText = "Analisando conteúdos... (Passo 2/2)";
+            const prompt = `Analise o texto deste material didático abaixo. Extraia uma lista com os principais assuntos e tópicos presentes nele para servirem de tema de aula de Ciências Humanas. Retorne APENAS os nomes dos tópicos separados por uma quebra de linha (Enter). Não escreva textos adicionais.\n\nTEXTO:\n${textoFinal}`;
 
-        // PASSO 2: Enviar apenas o texto puro para o Gemini
-        const prompt = `Analise o texto deste material didático abaixo. Extraia uma lista com os principais assuntos e tópicos presentes nele para servirem de tema de aula de Ciências Humanas. Retorne APENAS os nomes dos tópicos separados por uma quebra de linha (Enter). Não escreva textos adicionais.\n\nTEXTO DO MATERIAL:\n${textoFinal}`;
-        const cleanApiKey = API_KEY.trim();
-
-        const requestBody = {
-            contents: [{
-                parts: [{ text: prompt }]
-            }]
-        };
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanApiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            const erroServidor = await response.text();
-            throw new Error(`Erro na API (${response.status}): ${erroServidor}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.candidates && data.candidates.length > 0) {
-            const textoGerado = data.candidates[0].content.parts[0].text;
-            temasSugeridosPDF = textoGerado.split('\n').filter(tema => tema.trim() !== "");
+            // Chama o Cérebro Blindado
+            const data = await chamarInteligenciaArtificial(prompt, statusDiv);
             
-            const datalist = document.getElementById('lista-temas-sugeridos');
-            datalist.innerHTML = '';
-            temasSugeridosPDF.forEach(tema => {
-                const option = document.createElement('option');
-                option.value = tema.replace(/^[-*]\s*/, '').trim();
-                datalist.appendChild(option);
-            });
+            if (data && data.candidates && data.candidates.length > 0) {
+                const textoGerado = data.candidates[0].content.parts[0].text;
+                temasSugeridosPDF = textoGerado.split('\n').filter(tema => tema.trim() !== "");
+                
+                const datalist = document.getElementById('lista-temas-sugeridos');
+                datalist.innerHTML = '';
+                temasSugeridosPDF.forEach(tema => {
+                    const option = document.createElement('option');
+                    option.value = tema.replace(/^[-*]\s*/, '').trim();
+                    datalist.appendChild(option);
+                });
 
-            statusDiv.style.color = "green";
-            statusDiv.innerText = `✅ Sucesso Definitivo! Foram encontrados ${temasSugeridosPDF.length} tópicos no material. Vá para o próximo passo.`;
-        } else {
-            throw new Error("A IA leu o texto, mas não conseguiu extrair os tópicos.");
+                statusDiv.style.color = "green";
+                statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} tópicos no material. Vá para o próximo passo.`;
+            } else {
+                throw new Error("A IA leu o texto, mas não conseguiu formar os tópicos.");
+            }
+
+        } catch (error) {
+            console.error(error);
+            statusDiv.style.color = "red";
+            statusDiv.innerText = `❌ ${error.message}`;
+        } finally {
+            btnExtrair.innerText = "📄 Extrair Assuntos do PDF";
+            btnExtrair.disabled = false;
         }
+    };
 
-    } catch (error) {
-        console.error("Erro completo:", error);
-        statusDiv.style.color = "red";
-        statusDiv.innerText = `❌ Falha: ${error.message}`;
-    } finally {
-        btnExtrair.innerText = "📄 Extrair Assuntos do PDF";
-        btnExtrair.disabled = false;
-    }
+    reader.readAsDataURL(file);
 }
 
 function gerarCamposDeAula() {
@@ -275,29 +309,18 @@ async function gerarPlano() {
     `;
 
     try {
-        const cleanApiKey = API_KEY.trim();
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanApiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-
-        if (!response.ok) {
-            const erroServidor = await response.text();
-            throw new Error(`Erro na API (${response.status}): ${erroServidor}`);
-        }
-
-        const data = await response.json();
+        // Chama o Cérebro Blindado para gerar a aula final
+        const data = await chamarInteligenciaArtificial(prompt, null);
         
-        if(data.candidates && data.candidates.length > 0) {
+        if(data && data.candidates && data.candidates.length > 0) {
             const textoGerado = data.candidates[0].content.parts[0].text;
             resultadoDiv.innerHTML = textoGerado.replace(/\n/g, '<br>');
         } else {
-            resultadoDiv.innerText = "Erro ao gerar o plano. Verifique a chave da API.";
+            resultadoDiv.innerText = "Erro ao formatar o plano gerado.";
         }
     } catch (error) {
         console.error(error);
-        resultadoDiv.innerText = `Erro de conexão com a IA: ${error.message}`;
+        resultadoDiv.innerText = `Erro de conexão: ${error.message}`;
     } finally {
         btn.innerText = "🤖 Gerar Plano de Aula Completo com IA";
         btn.disabled = false;
