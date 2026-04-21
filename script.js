@@ -1,4 +1,3 @@
-// A sua Chave API
 const API_KEY = 'AIzaSyDFwczNq_VH5nn3EJ7423Qdy-J51WkB-Dk'; 
 
 let temasSugeridosPDF = [];
@@ -35,9 +34,9 @@ async function extrairTemasPDF() {
     const file = fileInput.files[0];
     
     btnExtrair.disabled = true;
-    btnExtrair.innerText = "Lendo PDF... (Isso pode levar alguns segundos)";
+    btnExtrair.innerText = "Lendo PDF com Gemini PRO... (Pode levar até 1 minuto)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Empacotando arquivo e enviando para a IA...";
+    statusDiv.innerText = "Empacotando arquivo e enviando para a Inteligência Artificial...";
 
     const reader = new FileReader();
     
@@ -61,8 +60,8 @@ async function extrairTemasPDF() {
                 }]
             };
 
-            // CORREÇÃO: Usando o nome gemini-1.5-flash-latest
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${cleanApiKey}`, {
+            // MUDANÇA CRUCIAL: Usando o gemini-1.5-pro-latest (O melhor para PDFs)
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${cleanApiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
@@ -269,8 +268,8 @@ async function gerarPlano() {
 
     try {
         const cleanApiKey = API_KEY.trim();
-        // CORREÇÃO: Usando o nome gemini-1.5-flash-latest também para gerar o plano final
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${cleanApiKey}`, {
+        // Usando o gemini-1.5-pro-latest também para gerar o plano final com máxima qualidade
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${cleanApiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
