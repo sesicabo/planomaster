@@ -1,5 +1,8 @@
-// ATENÇÃO: Cole sua CHAVE NOVA (gerada em um "Novo Projeto") aqui:
+// ATENÇÃO: Cole sua CHAVE NOVA (gerada em "New Project") aqui:
 const API_KEY = 'AIzaSyDuNTW4HPxxBgN5pkXR166s-nSShe6tju0'; 
+
+// Configura o motor de leitura do PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
 let temasSugeridosPDF = [];
 
@@ -22,6 +25,7 @@ function toggleOutraAbordagem(selectElement) {
     }
 }
 
+// CÉREBRO DEFINITIVO: Extrai o texto localmente antes de enviar para a IA
 async function extrairTemasPDF() {
     const fileInput = document.getElementById('pdf-upload');
     const statusDiv = document.getElementById('status-extracao');
@@ -35,79 +39,78 @@ async function extrairTemasPDF() {
     const file = fileInput.files[0];
     
     btnExtrair.disabled = true;
-    btnExtrair.innerText = "Lendo material didático... (Aguarde)";
+    btnExtrair.innerText = "Lendo páginas... (Passo 1/2)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Enviando arquivo para análise da Inteligência Artificial...";
+    statusDiv.innerText = "Extraindo texto do material didático localmente (isso evita bloqueios de tamanho)...";
 
-    const reader = new FileReader();
-    
-    reader.onload = async function(event) {
-        try {
-            const base64Data = event.target.result.split(',')[1];
-            const prompt = "Analise este material didático. Extraia uma lista com os principais assuntos e tópicos de História, Filosofia ou Sociologia presentes nele para servirem de tema de aula. Retorne APENAS os nomes dos tópicos separados por uma quebra de linha (Enter). Não escreva textos adicionais.";
-            const cleanApiKey = API_KEY.trim();
+    try {
+        // PASSO 1: Extrair o texto do PDF usando JavaScript no navegador
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        let textoExtraido = "";
 
-            const requestBody = {
-                contents: [{
-                    parts: [
-                        { text: prompt },
-                        {
-                            inlineData: {
-                                mimeType: file.type || "application/pdf",
-                                data: base64Data
-                            }
-                        }
-                    ]
-                }]
-            };
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            textoExtraido += pageText + "\n";
+        }
 
-            // Usando o modelo padrão oficial para leitura de PDFs
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanApiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+        // Limitamos a 80.000 caracteres para garantir uma resposta imediata e leve da API
+        const textoFinal = textoExtraido.substring(0, 80000);
+
+        statusDiv.innerText = "Passo 2/2: Texto extraído! Solicitando os assuntos à Inteligência Artificial...";
+        btnExtrair.innerText = "Analisando conteúdos... (Passo 2/2)";
+
+        // PASSO 2: Enviar apenas o texto puro para o Gemini
+        const prompt = `Analise o texto deste material didático abaixo. Extraia uma lista com os principais assuntos e tópicos presentes nele para servirem de tema de aula de Ciências Humanas. Retorne APENAS os nomes dos tópicos separados por uma quebra de linha (Enter). Não escreva textos adicionais.\n\nTEXTO DO MATERIAL:\n${textoFinal}`;
+        const cleanApiKey = API_KEY.trim();
+
+        const requestBody = {
+            contents: [{
+                parts: [{ text: prompt }]
+            }]
+        };
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const erroServidor = await response.text();
+            throw new Error(`Erro na API (${response.status}): ${erroServidor}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.candidates && data.candidates.length > 0) {
+            const textoGerado = data.candidates[0].content.parts[0].text;
+            temasSugeridosPDF = textoGerado.split('\n').filter(tema => tema.trim() !== "");
+            
+            const datalist = document.getElementById('lista-temas-sugeridos');
+            datalist.innerHTML = '';
+            temasSugeridosPDF.forEach(tema => {
+                const option = document.createElement('option');
+                option.value = tema.replace(/^[-*]\s*/, '').trim();
+                datalist.appendChild(option);
             });
 
-            if (!response.ok) {
-                const erroServidor = await response.text();
-                // Se der erro 404, avisa o professor sobre a chave
-                if (response.status === 404) {
-                    throw new Error("Sua Chave da API não tem permissão para os modelos novos. Gere uma nova chave em 'New Project' no Google AI Studio.");
-                }
-                throw new Error(`Erro na API (${response.status}): ${erroServidor}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.candidates && data.candidates.length > 0) {
-                const textoGerado = data.candidates[0].content.parts[0].text;
-                temasSugeridosPDF = textoGerado.split('\n').filter(tema => tema.trim() !== "");
-                
-                const datalist = document.getElementById('lista-temas-sugeridos');
-                datalist.innerHTML = '';
-                temasSugeridosPDF.forEach(tema => {
-                    const option = document.createElement('option');
-                    option.value = tema.replace(/^[-*]\s*/, '').trim();
-                    datalist.appendChild(option);
-                });
-
-                statusDiv.style.color = "green";
-                statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} tópicos no material. Vá para o próximo passo.`;
-            } else {
-                throw new Error("A IA leu o arquivo, mas não conseguiu extrair os textos.");
-            }
-
-        } catch (error) {
-            console.error("Erro completo:", error);
-            statusDiv.style.color = "red";
-            statusDiv.innerText = `❌ ${error.message}`;
-        } finally {
-            btnExtrair.innerText = "📄 Extrair Assuntos do PDF";
-            btnExtrair.disabled = false;
+            statusDiv.style.color = "green";
+            statusDiv.innerText = `✅ Sucesso Definitivo! Foram encontrados ${temasSugeridosPDF.length} tópicos no material. Vá para o próximo passo.`;
+        } else {
+            throw new Error("A IA leu o texto, mas não conseguiu extrair os tópicos.");
         }
-    };
 
-    reader.readAsDataURL(file);
+    } catch (error) {
+        console.error("Erro completo:", error);
+        statusDiv.style.color = "red";
+        statusDiv.innerText = `❌ Falha: ${error.message}`;
+    } finally {
+        btnExtrair.innerText = "📄 Extrair Assuntos do PDF";
+        btnExtrair.disabled = false;
+    }
 }
 
 function gerarCamposDeAula() {
