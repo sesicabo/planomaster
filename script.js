@@ -1,6 +1,7 @@
 // ATENÇÃO: Cole sua CHAVE DO GROQ (começa com gsk_) aqui:
 const API_KEY = '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'; 
 
+// Biblioteca para ler o PDF localmente
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
 let temasSugeridosPDF = [];
@@ -24,15 +25,14 @@ function toggleOutraAbordagem(selectElement) {
     }
 }
 
-// CÉREBRO BLINDADO: Tenta os modelos mais novos do Groq automaticamente
+// O CÉREBRO: Conexão com os modelos mais econômicos e rápidos do Groq
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
     
-    // Lista de motores hiper-rápidos e atualizados do Groq
+    // Modelos ultra-econômicos que não estouram o limite de tokens
     const modelosDisponiveis = [
-        'llama-3.1-70b-versatile',
-        'llama3-70b-8192',
-        'llama3-8b-8192'
+        'llama-3.1-8b-instant', 
+        'gemma2-9b-it'
     ];
 
     let erroFinal = "";
@@ -40,7 +40,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     for (const modelo of modelosDisponiveis) {
         try {
             if(statusDivElement) {
-                statusDivElement.innerText = `Conectando ao motor da IA (${modelo})...`;
+                statusDivElement.innerText = `Conectando ao motor econômico (${modelo})...`;
             }
 
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -58,17 +58,17 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
 
             if (response.ok) {
                 const data = await response.json();
-                return data.choices[0].message.content; // DEU CERTO!
+                return data.choices[0].message.content; 
             } else {
                 erroFinal = await response.text();
-                console.warn(`Motor ${modelo} falhou ou foi aposentado. Tentando o próximo...`);
+                console.warn(`Motor ${modelo} indisponível. Tentando o próximo...`);
             }
         } catch (error) {
             erroFinal = error.message;
         }
     }
 
-    throw new Error(`O servidor recusou todos os modelos. Detalhes: ${erroFinal}`);
+    throw new Error(`O servidor bloqueou por limite de uso. Detalhes: ${erroFinal}`);
 }
 
 async function extrairTemasPDF() {
@@ -86,7 +86,7 @@ async function extrairTemasPDF() {
     btnExtrair.disabled = true;
     btnExtrair.innerText = "Lendo texto do material... (Aguarde)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Lendo o arquivo internamente...";
+    statusDiv.innerText = "Processando o arquivo internamente...";
 
     const reader = new FileReader();
     
@@ -103,8 +103,8 @@ async function extrairTemasPDF() {
                 textoExtraido += pageText + "\n";
             }
 
-            // Limite de segurança de caracteres para os modelos Llama3
-            const textoFinal = textoExtraido.substring(0, 25000);
+            // Reduzido para 15.000 caracteres para garantir que não vai estourar os tokens gratuitos
+            const textoFinal = textoExtraido.substring(0, 15000);
 
             const prompt = `Analise o texto deste material didático abaixo. Extraia uma lista com os principais assuntos e tópicos presentes nele para servirem de tema de aula de Ciências Humanas. Retorne APENAS os nomes dos tópicos separados por uma quebra de linha (Enter). Não escreva textos adicionais.\n\nTEXTO:\n${textoFinal}`;
 
