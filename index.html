@@ -59,7 +59,18 @@
 
         <fieldset class="pdf-section">
             <legend>Material Didático (PDF)</legend>
-            <p style="font-size: 0.9em; color: #555; margin-top: 0;">Anexe o PDF do capítulo para que a IA extraia os temas automaticamente.</p>
+            <p style="font-size: 0.9em; color: #555; margin-top: 0;">Anexe o PDF e selecione as disciplinas para a IA extrair temas específicos.</p>
+            
+            <div class="form-group">
+                <label>Extrair temas focados em:</label>
+                <div class="dias-semana" style="margin-bottom: 15px;">
+                    <label class="check-container"><input type="checkbox" value="História" class="filtro-disciplina" checked> História</label>
+                    <label class="check-container"><input type="checkbox" value="Filosofia" class="filtro-disciplina" checked> Filosofia</label>
+                    <label class="check-container"><input type="checkbox" value="Sociologia" class="filtro-disciplina"> Sociologia</label>
+                    <label class="check-container"><input type="checkbox" value="Geografia" class="filtro-disciplina"> Geografia</label>
+                </div>
+            </div>
+
             <div class="form-group">
                 <input type="file" id="pdf-upload" accept="application/pdf">
                 <button onclick="extrairTemasPDF()" class="btn-secondary" id="btn-extrair">📄 Extrair Assuntos do PDF</button>
@@ -89,7 +100,7 @@
         </fieldset>
 
         <fieldset id="sessao-temas" style="display: none;">
-            <legend>Temas e Metodologias das Aulas</legend>
+            <legend>Temas, Disciplina e Metodologia</legend>
             <div id="aulas-container"></div>
             <button onclick="gerarPlano()" class="btn-primary" id="btn-gerar">🤖 Gerar Plano de Aula Completo com IA</button>
         </fieldset>
@@ -99,12 +110,11 @@
             <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
                 <button onclick="exportarParaPDF()" class="btn-success" id="btn-exportar" style="width: auto;">📥 Exportar Plano para PDF</button>
             </div>
-            
             <div id="container-impressao">
                 <div id="resultado-plano"></div>
             </div>
         </fieldset>
     </div>
-    <script src="script.js?v=10"></script>
+    <script src="script.js?v=11"></script>
 </body>
 </html>
