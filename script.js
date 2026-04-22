@@ -2,7 +2,6 @@
 const API_KEY = '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'; 
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
 let temasSugeridosPDF = [];
 
 function formatarDataBR(dataString) {
@@ -22,8 +21,7 @@ function toggleOutraAbordagem(selectElement) {
 
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
-    // Mantendo exclusivamente o modelo mais rápido, atualizado e econômico
-    const modelosDisponiveis = ['llama-3.1-8b-instant'];
+    const modelosDisponiveis = ['llama-3.1-8b-instant', 'llama3-8b-8192'];
     let erroFinal = "";
 
     for (const modelo of modelosDisponiveis) {
@@ -223,7 +221,6 @@ function limparMarkdownHTML(textoOriginal) {
     return textoOriginal;
 }
 
-// FUNÇÃO PARA CRIAR A PAUSA ENTRE AS REQUISIÇÕES (Evita o Erro 429)
 const atraso = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function gerarPlano() {
@@ -263,51 +260,62 @@ async function gerarPlano() {
 
     btn.disabled = true;
 
+    // CABEÇALHO OFICIAL DO SESI APLICADO (FO-SES-EDU-038-00)
     const cabecalhoOficialHTML = `
-        <table class="tabela-cabecalho-oficial">
-            <tr>
-                <td class="logo-sesi-box">SESI</td>
-                <td class="titulo-centro-box">
-                    <strong>FORMULÁRIO</strong><br>
-                    Planejamento pedagógico
-                </td>
-                <td class="codigo-documento-box">
-                    FO-SES-EDU-038-00<br>
-                    Página 1 de 1
-                </td>
-            </tr>
-        </table>
+        <div class="cabecalho-institucional">
+            <div class="sesi-top-bar">
+                <div class="sesi-top-blue"></div>
+                <div class="sesi-top-green"></div>
+            </div>
+            <table class="tabela-cabecalho-oficial">
+                <tr>
+                    <td class="logo-sesi-box">
+                        <span class="sesi-logo-text">SES<span class="sesi-logo-i">I</span></span>
+                    </td>
+                    <td class="titulo-centro-box">
+                        <strong>FORMULÁRIO</strong><br>
+                        Planejamento pedagógico
+                    </td>
+                    <td class="codigo-documento-box">
+                        <strong>FO-SES-EDU-038-00</strong><br>
+                    </td>
+                </tr>
+            </table>
 
-        <table class="tabela-dados-aula" style="margin-bottom: 15px;">
-            <tr>
-                <td colspan="2"><strong>Unidade Escolar:</strong> ${unidade}</td>
-                <td><strong>Professor:</strong> ${professor}</td>
-            </tr>
-            <tr>
-                <td colspan="2"><strong>Área de conhecimento:</strong> ${area}</td>
-                <td><strong>Série e Turma:</strong> ${turma}</td>
-            </tr>
-            <tr>
-                <td><strong>Bimestre:</strong> ${bimestre}</td>
-                <td><strong>Período:</strong> ${periodoTexto}</td>
-                <td><strong>Capítulo:</strong> ${capitulo}</td>
-            </tr>
-        </table>
+            <table class="tabela-dados-aula">
+                <tr>
+                    <td colspan="2"><strong>Unidade Escolar:</strong> ${unidade}</td>
+                    <td><strong>Professor:</strong> ${professor}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>Área de conhecimento:</strong> ${area}</td>
+                    <td><strong>Série e Turma:</strong> ${turma}</td>
+                </tr>
+                <tr>
+                    <td><strong>Bimestre:</strong> ${bimestre}</td>
+                    <td><strong>Período:</strong> ${periodoTexto}</td>
+                    <td><strong>Capítulo:</strong> ${capitulo}</td>
+                </tr>
+            </table>
+        </div>
 
-        <div style="background:#f1f1f1; border:1px solid #000; padding:5px; font-weight:bold; border-bottom:none;">Habilidades:</div>
-        <div style="border:1px solid #000; padding:10px; margin-bottom:15px; font-size:0.9em;">${habilidades}</div>
+        <div class="titulo-sessao">Habilidades:</div>
+        <div class="habilidades-caixa">${habilidades}</div>
         
-        <div style="background:#f1f1f1; border:1px solid #000; padding:5px; font-weight:bold; border-bottom:none;">Desenvolvimento da aula e recursos:</div>
+        <div class="titulo-sessao">Desenvolvimento da aula e recursos que serão utilizados:</div>
         <div id="container-aulas-geradas"></div>
-
         <div id="container-estrategias-geradas"></div>
 
-        <div class="rodape-institucional" id="rodape-pdf" style="display:none; margin-top:20px; border-top:1px solid #000; padding-top:10px; font-size:0.8em; width:100%;">
-            <div style="display:flex; justify-content:space-between;">
-                <div>CONTROLADORIA / FORMATIVO</div>
-                <div>Planejamento pedagógico | FO-SES-EDU-038-00 | ${new Date().toLocaleDateString('pt-BR')}</div>
-                <div>Diretoria de Educação e Cultura</div>
+        <div class="sesi-footer-container" id="rodape-pdf" style="display:none;">
+            <div class="sesi-seal">
+                <div class="sesi-seal-inner">✓</div>
             </div>
+            <div class="sesi-footer-text">
+                <strong>CONTROLE NORMATIVO</strong><br>
+                Planejamento pedagógico | FO-SES-EDU-038-00 | ${new Date().toLocaleDateString('pt-BR')}<br>
+                Diretoria de Educação e Cultura
+            </div>
+            <div class="sesi-bottom-bar"></div>
         </div>
     `;
     
@@ -321,40 +329,27 @@ async function gerarPlano() {
         const tempo = el.querySelector('.tempo-aula').value;
         const tema = el.querySelector('.tema-aula').value;
         const disciplina = el.querySelector('.disciplina-aula').value; 
-        
         let abordagem = el.querySelector('.abordagem-aula').value;
         if (abordagem === "Outra") abordagem = el.querySelector('.abordagem-outra-aula').value;
 
         if (tema) {
             btn.innerText = `⏳ Gerando Aula ${id}... (Aguarde)`;
+            const prompt = `Aja como um Professor Especialista de ${disciplina}. Escreva o plano APENAS para a aula abaixo.
+            DIRETRIZ DE REDAÇÃO PEDAGÓGICA: Seja didático e objetivo. Escreva pequenos parágrafos descrevendo a ação do professor e aluno usando conceitos de ${disciplina}.
             
-            const prompt = `Aja como um Professor Especialista da disciplina de ${disciplina}. Escreva o plano APENAS para a aula abaixo.
-            
-            DIRETRIZ DE REDAÇÃO PEDAGÓGICA: 
-            Seja didático e objetivo. Escreva pequenos parágrafos, contendo frases diretas para os Momentos 1, 2 e 3. Descreva a ação do professor e do aluno utilizando a linguagem e os conceitos de ${disciplina}. Mostre como a abordagem exigida será aplicada.
-            
-            AULA A SER GERADA:
-            Data: ${data} - Aula ${id}
-            Disciplina: ${disciplina}
-            Tema: ${tema}
-            Duração: ${tempo} min
-            Abordagem Pedagógica: ${abordagem}
+            AULA: Data: ${data} - Aula ${id} | Disciplina: ${disciplina} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem}
 
-            REGRAS DE FORMATAÇÃO ESTRITA:
-            Retorne EXATAMENTE no formato HTML abaixo. NÃO ESCREVA MENSAGENS ANTES OU DEPOIS. APENAS AS TAGS HTML PURAS.
-            
+            RETORNE APENAS O HTML ABAIXO PREENCHIDO:
             <div class="aula-linha" id="resultado-aula-${id}">
                 <div class="aula-coluna-esq">
-                    <strong>${data} - Aula ${id}:</strong><br>
-                    ${tema} <br><em>(${disciplina})</em><br><br>
-                    <strong>Objetivos:</strong><br>
-                    <p>[Objetivos diretos...]</p>
+                    <strong>${data} - Aula ${id}:</strong><br>${tema} <br><em>(${disciplina})</em><br><br>
+                    <strong>Objetivos:</strong><br><p>[Objetivos diretos...]</p>
                     <button class="btn-refazer" onclick="refazerAula('${id}')">🔄 Refazer apenas esta aula</button>
                 </div>
                 <div class="aula-coluna-dir">
-                    <p><strong>Momento 1 - Acolhida/Provocação ([Tempo proporcional] min):</strong> [Sua descrição didática...]</p>
-                    <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo proporcional] min):</strong> [Sua descrição didática...]</p>
-                    <p><strong>Momento 3 - Evidência/Avaliação ([Tempo proporcional] min):</strong> [Sua descrição didática...]</p>
+                    <p><strong>Momento 1 - Acolhida/Provocação ([Tempo] min):</strong> [Descrição...]</p>
+                    <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo] min):</strong> [Descrição...]</p>
+                    <p><strong>Momento 3 - Evidência/Avaliação ([Tempo] min):</strong> [Descrição...]</p>
                 </div>
             </div>`;
 
@@ -362,50 +357,35 @@ async function gerarPlano() {
                 const textoGerado = await chamarInteligenciaArtificial(prompt, null);
                 const htmlFiltrado = limparMarkdownHTML(textoGerado); 
                 containerAulas.innerHTML += htmlFiltrado; 
-                
-                // O FREIO DE ARRUMAÇÃO: Pausa de 3 segundos para a Groq não bloquear por spam (Erro 429)
                 await atraso(3000); 
-                
             } catch (error) {
-                containerAulas.innerHTML += `<div class="aula-linha"><div class="aula-coluna-esq" style="color:red; width:100%;">Erro ao gerar a Aula ${id}: ${error.message}</div></div>`;
+                containerAulas.innerHTML += `<div class="aula-linha"><div class="aula-coluna-esq" style="color:red; width:100%;">Erro: ${error.message}</div></div>`;
             }
         }
     }
 
     btn.innerText = `⏳ Finalizando Estratégias e Evidências...`;
-    
-    // Pausa extra antes de gerar a estratégia final para garantir segurança do limite de tokens
     await atraso(3000); 
     
-    const promptEstrategias = `Aja como um Coordenador Pedagógico. Acabamos de planejar uma sequência de aulas. 
-    Baseado no resumo das aulas abaixo, crie a seção final do documento oficial chamada "Estratégias e evidências de aprendizagem".
-    
-    RESUMO DAS AULAS PLANEJADAS:
-    ${resumoParaEstrategias}
-
-    DIRETRIZ DE REDAÇÃO:
-    - Escreva 4 a 5 tópicos (bullet points).
-    - Inicie cada tópico com um título curto em negrito, seguido de uma explicação didática.
-    - O texto deve consolidar as abordagens metodológicas escolhidas nas aulas e mostrar como o aprendizado será evidenciado.
-    - Seja direto e não exceda no tamanho.
-
-    FORMATO OBRIGATÓRIO (RETORNE APENAS O CÓDIGO HTML ABAIXO PREENCHIDO):
-    <div class="titulo-sessao">Estratégias e evidências de aprendizagem:</div>
-    <div style="border:1px solid #000; border-top:none; padding:15px; margin-bottom: 20px; font-size:0.95em; line-height:1.5; background-color: #fff;">
-        <ul style="margin: 0; padding-left: 20px;">
-            <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição didática...]</li>
-            <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição didática...]</li>
-            <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição didática...]</li>
-            <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição didática...]</li>
-        </ul>
+    const promptEstrategias = `Aja como um Coordenador Pedagógico. Crie a seção final de "Estratégias e evidências" baseada nas aulas geradas.
+    RESUMO: ${resumoParaEstrategias}
+    DIRETRIZ: Escreva 4 a 5 tópicos curtos. Inicie com um título em negrito.
+    RETORNE APENAS O CÓDIGO HTML ABAIXO PREENCHIDO:
+    <div class="sessao-estrategias">
+        <div class="titulo-sessao">Estratégias e evidências de aprendizagem:</div>
+        <div style="border:1px solid #000; border-top:none; padding:15px; margin-bottom: 20px; font-size:0.95em; line-height:1.5; background-color: #fff;">
+            <ul style="margin: 0; padding-left: 20px;">
+                <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição...]</li>
+                <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição...]</li>
+            </ul>
+        </div>
     </div>`;
 
     try {
         const estrategiasGeradas = await chamarInteligenciaArtificial(promptEstrategias, null);
-        const htmlEstrategias = estrategiasGeradas.replace(/```html/gi, '').replace(/```/gi, '').trim();
-        containerEstrategias.innerHTML = htmlEstrategias; 
+        containerEstrategias.innerHTML = estrategiasGeradas.replace(/```html/gi, '').replace(/```/gi, '').trim(); 
     } catch (error) {
-        containerEstrategias.innerHTML = `<div style="color:red; padding:10px;">Erro ao gerar Estratégias: ${error.message}</div>`;
+        containerEstrategias.innerHTML = `<div style="color:red; padding:10px;">Erro: ${error.message}</div>`;
     }
 
     btn.innerText = "🤖 Gerar Plano de Aula Completo com IA";
@@ -420,7 +400,6 @@ window.refazerAula = async function(idAula) {
     const tempo = inputBox.querySelector('.tempo-aula').value;
     const tema = inputBox.querySelector('.tema-aula').value;
     const disciplina = inputBox.querySelector('.disciplina-aula').value;
-    
     let abordagem = inputBox.querySelector('.abordagem-aula').value;
     if (abordagem === "Outra") abordagem = inputBox.querySelector('.abordagem-outra-aula').value;
 
@@ -432,62 +411,57 @@ window.refazerAula = async function(idAula) {
     btn.innerText = "⏳ Refazendo... Aguarde";
     btn.disabled = true;
 
-    const prompt = `Aja como um Professor Especialista da disciplina de ${disciplina}. Reescreva o planejamento APENAS desta aula.
-    
-    AULA: ID ${idAula} | Data: ${data} | Tema: ${tema} | Disciplina: ${disciplina} | Duração: ${tempo} min | Abordagem Exigida: ${abordagem}
-    
-    DIRETRIZ DE REDAÇÃO: Escreva um pequeno parágrafo didático e objetivo para cada momento, descrevendo as ações em sala de aula de acordo com a abordagem, utilizando jargões e metodologias próprias de ${disciplina}.
-    
+    const prompt = `Aja como um Professor Especialista de ${disciplina}. Reescreva o planejamento APENAS desta aula de forma didática e objetiva.
+    AULA: ID ${idAula} | Data: ${data} | Tema: ${tema} | Disciplina: ${disciplina} | Duração: ${tempo} min | Abordagem: ${abordagem}
     FORMATO OBRIGATÓRIO (RETORNE APENAS ISSO):
     <div class="aula-linha" id="resultado-aula-${idAula}">
         <div class="aula-coluna-esq">
-            <strong>${data} - Aula ${idAula}:</strong><br>
-            ${tema} <br><em>(${disciplina})</em><br><br>
-            <strong>Objetivos:</strong><br>
-            <p>[Objetivos...]</p>
+            <strong>${data} - Aula ${idAula}:</strong><br>${tema} <br><em>(${disciplina})</em><br><br>
+            <strong>Objetivos:</strong><br><p>[Objetivos...]</p>
             <button class="btn-refazer" onclick="refazerAula('${idAula}')">🔄 Refazer apenas esta aula</button>
         </div>
         <div class="aula-coluna-dir">
-            <p><strong>Momento 1 - Acolhida/Provocação ([Tempo proporcional] min):</strong> [Descrição didática...]</p>
-            <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo proporcional] min):</strong> [Descrição didática...]</p>
-            <p><strong>Momento 3 - Evidência/Avaliação ([Tempo proporcional] min):</strong> [Descrição didática...]</p>
+            <p><strong>Momento 1 - Acolhida/Provocação ([Tempo] min):</strong> [Descrição...]</p>
+            <p><strong>Momento 2 - Desenvolvimento/Prática ([Tempo] min):</strong> [Descrição...]</p>
+            <p><strong>Momento 3 - Evidência/Avaliação ([Tempo] min):</strong> [Descrição...]</p>
         </div>
     </div>`;
 
     try {
         const textoGerado = await chamarInteligenciaArtificial(prompt, null);
-        const htmlFiltrado = limparMarkdownHTML(textoGerado);
-        cardElement.outerHTML = htmlFiltrado; 
+        cardElement.outerHTML = limparMarkdownHTML(textoGerado); 
     } catch(e) {
-        alert("Erro ao refazer a aula: " + e.message);
+        alert("Erro ao refazer: " + e.message);
         btn.innerText = oldText;
         btn.disabled = false;
     }
 }
 
+// OTIMIZADO PARA EXPORTAÇÃO A4 SEM CORTAR O LAYOUT E MOSTRANDO O RODAPÉ
 function exportarParaPDF() {
     const btnExportar = document.getElementById('btn-exportar');
     btnExportar.innerText = "⏳ Preparando PDF...";
     
     const elementoParaImprimir = document.getElementById('container-impressao');
-    
     const botoes = elementoParaImprimir.querySelectorAll('.btn-refazer');
     botoes.forEach(btn => btn.style.display = 'none');
 
     const rodape = elementoParaImprimir.querySelector('#rodape-pdf');
-    if (rodape) rodape.style.display = 'block';
+    if (rodape) rodape.style.display = 'flex'; // Exibe o rodapé lindão
 
     const configuracao = {
-        margin:       10, 
+        margin:       [10, 10, 10, 10], 
         filename:     'Plano_de_Aula_SESI.pdf',
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 }, 
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        // Força o "windowWidth" simulando uma tela grande para não desconfigurar o Flexbox
+        html2canvas:  { scale: 2, useCORS: true, windowWidth: 1000 }, 
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['css', 'legacy'] } // Respeita as regras do nosso CSS para não cortar
     };
 
     html2pdf().set(configuracao).from(elementoParaImprimir).save().then(() => {
         botoes.forEach(btn => btn.style.display = 'block');
-        if (rodape) rodape.style.display = 'none';
+        if (rodape) rodape.style.display = 'none'; // Esconde na tela de novo
         btnExportar.innerText = "📥 Exportar Plano para PDF";
     });
 }
