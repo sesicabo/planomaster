@@ -40,7 +40,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
                 body: JSON.stringify({
                     model: modelo, 
                     messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.3 // Diminuí a temperatura para ela ser mais "robótica" e seguir regras
+                    temperature: 0.3 
                 })
             });
 
@@ -90,7 +90,6 @@ async function extrairTemasPDF() {
 
             const textoFinal = textoExtraido.substring(0, 25000);
             
-            // PROMPT BLINDADO: Ordem cronológica e proibição de conversas
             const prompt = `Atue como um Coordenador Pedagógico. Abaixo estão trechos sequenciais de um material didático.
             Sua missão é extrair uma lista de TEMAS DE AULA focados EXCLUSIVAMENTE nas disciplinas: ${disciplinasFoco}.
             
@@ -104,7 +103,6 @@ async function extrairTemasPDF() {
 
             const textoGerado = await chamarInteligenciaArtificial(prompt, statusDiv);
             
-            // FILTRO ANTI-LIXO: Remove qualquer frase de introdução ou categorias que a IA tentar forçar
             temasSugeridosPDF = textoGerado.split('\n').filter(tema => {
                 let t = tema.trim().toLowerCase();
                 if(t === "" || t.includes("aqui está") || t.includes("temas de") || t.includes("focados em") || t.endsWith(":")) {
@@ -116,7 +114,6 @@ async function extrairTemasPDF() {
             const datalist = document.getElementById('lista-temas-sugeridos');
             datalist.innerHTML = '';
             temasSugeridosPDF.forEach(tema => {
-                // Limpa números, traços e asteriscos do começo da frase
                 const cleanTema = tema.replace(/^[-*0-9.)]+\s*/, '').replace(/[\*\_]/g, '').trim();
                 if(cleanTema.length > 3) {
                     const option = document.createElement('option');
@@ -226,15 +223,15 @@ function limparMarkdownHTML(textoOriginal) {
 }
 
 async function gerarPlano() {
-    const unidade = document.getElementById('unidade').value;
-    const professor = document.getElementById('professor').value;
-    const area = document.getElementById('area').value;
-    const turma = document.getElementById('turma').value;
-    const bimestre = document.getElementById('bimestre').value;
+    const unidade = document.getElementById('unidade').value || "SESI";
+    const professor = document.getElementById('professor').value || "";
+    const area = document.getElementById('area').value || "";
+    const turma = document.getElementById('turma').value || "";
+    const bimestre = document.getElementById('bimestre').value || "";
     const dataInicio = document.getElementById('data-inicio').value;
     const dataFim = document.getElementById('data-fim').value;
-    const capitulo = document.getElementById('capitulo').value;
-    const habilidades = document.getElementById('habilidades').value.replace(/\n/g, '<br>');
+    const capitulo = document.getElementById('capitulo').value || "";
+    const habilidades = document.getElementById('habilidades').value.replace(/\n/g, '<br>') || "";
     
     let periodoTexto = (dataInicio && dataFim) ? `${formatarDataBR(dataInicio)} à ${formatarDataBR(dataFim)}` : "";
 
@@ -253,29 +250,54 @@ async function gerarPlano() {
 
     btn.disabled = true;
 
-    const cabecalhoHTML = `
-        <div class="cabecalho-institucional">
-            <div style="display: flex; justify-content: space-between;">
-                <p><strong>Unidade Escolar:</strong> ${unidade}</p>
-                <p><strong>Professor:</strong> ${professor}</p>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <p><strong>Área de conhecimento:</strong> ${area}</p>
-                <p><strong>Série e Turma:</strong> ${turma}</p>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <p><strong>Bimestre:</strong> ${bimestre}</p>
-                <p><strong>Período:</strong> ${periodoTexto}</p>
-            </div>
-            <p><strong>Capítulo:</strong> ${capitulo}</p>
-        </div>
-        <div class="titulo-sessao">Habilidades:</div>
-        <div class="habilidades-caixa">${habilidades}</div>
-        <div class="titulo-sessao">Desenvolvimento da aula e recursos que serão utilizados:</div>
+    // NOVO: Cabeçalho institucional formato tabela
+    const cabecalhoOficialHTML = `
+        <table class="tabela-cabecalho-oficial">
+            <tr>
+                <td class="logo-sesi-box">SESI</td>
+                <td class="titulo-centro-box">
+                    <strong>FORMULÁRIO</strong><br>
+                    Planejamento pedagógico
+                </td>
+                <td class="codigo-documento-box">
+                    FO-SES-EDU-038-00<br>
+                    Página 1 de 1
+                </td>
+            </tr>
+        </table>
+
+        <table class="tabela-dados-aula" style="margin-bottom: 15px;">
+            <tr>
+                <td colspan="2"><strong>Unidade Escolar:</strong> ${unidade}</td>
+                <td><strong>Professor:</strong> ${professor}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>Área de conhecimento:</strong> ${area}</td>
+                <td><strong>Série e Turma:</strong> ${turma}</td>
+            </tr>
+            <tr>
+                <td><strong>Bimestre:</strong> ${bimestre}</td>
+                <td><strong>Período:</strong> ${periodoTexto}</td>
+                <td><strong>Capítulo:</strong> ${capitulo}</td>
+            </tr>
+        </table>
+
+        <div style="background:#f1f1f1; border:1px solid #000; padding:5px; font-weight:bold; border-bottom:none;">Habilidades:</div>
+        <div style="border:1px solid #000; padding:10px; margin-bottom:15px; font-size:0.9em;">${habilidades}</div>
+        
+        <div style="background:#f1f1f1; border:1px solid #000; padding:5px; font-weight:bold; border-bottom:none;">Desenvolvimento da aula e recursos:</div>
         <div id="container-aulas-geradas"></div>
+
+        <div class="rodape-institucional" id="rodape-pdf" style="display:none; margin-top:20px; border-top:1px solid #000; padding-top:10px; font-size:0.8em; width:100%;">
+            <div style="display:flex; justify-content:space-between;">
+                <div>CONTROLADORIA / FORMATIVO</div>
+                <div>Planejamento pedagógico | FO-SES-EDU-038-00 | ${new Date().toLocaleDateString('pt-BR')}</div>
+                <div>Diretoria de Educação e Cultura</div>
+            </div>
+        </div>
     `;
     
-    resultadoDiv.innerHTML = cabecalhoHTML;
+    resultadoDiv.innerHTML = cabecalhoOficialHTML;
     const containerAulas = document.getElementById('container-aulas-geradas');
 
     for (const el of aulasInputs) {
@@ -394,8 +416,13 @@ function exportarParaPDF() {
     
     const elementoParaImprimir = document.getElementById('container-impressao');
     
+    // Esconde os botões amarelos de "Refazer Aula" para não saírem na impressão
     const botoes = elementoParaImprimir.querySelectorAll('.btn-refazer');
     botoes.forEach(btn => btn.style.display = 'none');
+
+    // Mostra o rodapé oficial
+    const rodape = elementoParaImprimir.querySelector('#rodape-pdf');
+    if (rodape) rodape.style.display = 'block';
 
     const configuracao = {
         margin:       10, 
@@ -406,7 +433,9 @@ function exportarParaPDF() {
     };
 
     html2pdf().set(configuracao).from(elementoParaImprimir).save().then(() => {
+        // Restaura a visualização padrão na tela
         botoes.forEach(btn => btn.style.display = 'block');
+        if (rodape) rodape.style.display = 'none';
         btnExportar.innerText = "📥 Exportar Plano para PDF";
     });
 }
