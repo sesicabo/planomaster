@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: 'Arial', sans-serif; /* Fonte mais institucional */
+    font-family: 'Arial', sans-serif;
     background-color: var(--bg-color);
     color: #000;
     margin: 0;
@@ -13,7 +13,7 @@ body {
 }
 
 .container {
-    max-width: 1000px; 
+    max-width: 1100px; /* Alargado um pouquinho para caber as 3 opções */
     margin: 0 auto;
     background-color: #ffffff;
     padding: 30px;
@@ -70,6 +70,7 @@ button {
 .btn-success { background-color: #198754; color: white; }
 .btn-success:hover { background-color: #146c43; }
 
+.dias-semana { display: flex; gap: 15px; flex-wrap: wrap; }
 .dias-semana-avancado { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 .dia-row { display: flex; align-items: center; background-color: #f8f9fa; padding: 10px 15px; border: 1px solid #e9ecef; }
 .check-container { width: 180px; margin: 0; display: flex; align-items: center; gap: 8px; cursor: pointer; }
@@ -79,78 +80,30 @@ button {
 .aula-item { background-color: #f8f9fa; padding: 15px; border-left: 4px solid var(--primary-color); margin-bottom: 15px; border-top: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd;}
 .aula-header { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; display: flex; justify-content: space-between; }
 .tag-duracao { font-size: 0.85em; color: #fff; background-color: #6c757d; padding: 3px 8px; border-radius: 4px; font-weight: normal; }
-.aula-controls { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
 
+/* NOVO: Ajustado para 3 colunas (Tema, Disciplina, Abordagem) */
+.aula-controls { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 10px; }
 
-/* =========================================================
-   NOVO DESIGN PADRÃO SESI (TABELA LIMPA PARA O PLANO)
-   ========================================================= */
-#container-impressao {
-    font-family: 'Arial', sans-serif;
-    color: #000;
-}
-
-.cabecalho-institucional {
-    border: 1px solid #000;
-    padding: 15px;
-    margin-bottom: 15px;
-    line-height: 1.5;
-}
+#container-impressao { font-family: 'Arial', sans-serif; color: #000; }
+.cabecalho-institucional { border: 1px solid #000; padding: 15px; margin-bottom: 15px; line-height: 1.5; }
 .cabecalho-institucional p { margin: 4px 0; font-size: 1em; }
+.titulo-sessao { background-color: #f1f1f1; border: 1px solid #000; padding: 8px; font-weight: bold; margin: 15px 0 0 0; border-bottom: none; }
+.habilidades-caixa { border: 1px solid #000; padding: 15px; margin-bottom: 20px; font-size: 0.95em; line-height: 1.5; }
 
-.titulo-sessao {
-    background-color: #f1f1f1;
-    border: 1px solid #000;
-    padding: 8px;
-    font-weight: bold;
-    margin: 15px 0 0 0;
-    border-bottom: none;
-}
-
-.habilidades-caixa {
-    border: 1px solid #000;
-    padding: 15px;
-    margin-bottom: 20px;
-    font-size: 0.95em;
-    line-height: 1.5;
-}
-
-/* Estrutura de Tabela para cada aula */
-.aula-linha {
-    display: flex;
-    border: 1px solid #000;
-    border-bottom: none; /* Evita borda dupla entre aulas */
-}
-.aula-linha:last-child {
-    border-bottom: 1px solid #000;
-}
-
-.aula-coluna-esq {
-    width: 35%;
-    padding: 15px;
-    border-right: 1px solid #000;
-    background-color: #fafafa;
-    display: flex;
-    flex-direction: column;
-}
+.aula-linha { display: flex; border: 1px solid #000; border-bottom: none; }
+.aula-linha:last-child { border-bottom: 1px solid #000; }
+.aula-coluna-esq { width: 35%; padding: 15px; border-right: 1px solid #000; background-color: #fafafa; display: flex; flex-direction: column; }
 .aula-coluna-esq strong { color: #000; font-size: 1.05em;}
 .aula-coluna-esq p { margin: 8px 0; font-size: 0.95em;}
-
-.aula-coluna-dir {
-    width: 65%;
-    padding: 15px;
-}
+.aula-coluna-dir { width: 65%; padding: 15px; }
 .aula-coluna-dir p { margin-top: 0; margin-bottom: 12px; font-size: 0.95em; line-height: 1.5; text-align: justify;}
 
-.btn-refazer {
-    background-color: #ffc107; 
-    color: #000;
-    border: 1px solid #cc9a06;
-    padding: 8px;
-    font-size: 0.85em;
-    cursor: pointer;
-    font-weight: bold;
-    width: 100%;
-    margin-top: auto; 
-}
+.btn-refazer { background-color: #ffc107; color: #000; border: 1px solid #cc9a06; padding: 8px; font-size: 0.85em; cursor: pointer; font-weight: bold; width: 100%; margin-top: auto; }
 .btn-refazer:hover { background-color: #e0a800; }
+
+@media (max-width: 768px) {
+    .aula-controls { grid-template-columns: 1fr; }
+    .aula-linha { flex-direction: column; border-bottom: 1px solid #000; margin-bottom: 15px; }
+    .aula-coluna-esq { width: 100%; border-right: none; border-bottom: 1px solid #000; }
+    .aula-coluna-dir { width: 100%; }
+}
