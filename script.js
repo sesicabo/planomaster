@@ -62,13 +62,18 @@ async function extrairTemasPDF() {
     const statusDiv = document.getElementById('status-extracao');
     const btnExtrair = document.getElementById('btn-extrair');
 
+    // Verifica quais disciplinas foram marcadas para filtrar
+    const checksDisciplinas = document.querySelectorAll('.filtro-disciplina:checked');
+    if (checksDisciplinas.length === 0) return alert("Selecione pelo menos uma disciplina para extrair os temas.");
+    const disciplinasFoco = Array.from(checksDisciplinas).map(chk => chk.value).join(', ');
+
     if (fileInput.files.length === 0) return alert("Selecione um arquivo PDF primeiro.");
 
     const file = fileInput.files[0];
     btnExtrair.disabled = true;
     btnExtrair.innerText = "Lendo texto do material... (Aguarde)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Processando as páginas do arquivo de forma otimizada...";
+    statusDiv.innerText = "Processando as páginas do arquivo...";
 
     const reader = new FileReader();
     reader.onload = async function(event) {
@@ -77,8 +82,6 @@ async function extrairTemasPDF() {
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
             let textoExtraido = "";
 
-            // LEITURA CIRÚRGICA: Pega apenas os títulos/subtítulos (primeiros 300 chars) de cada página.
-            // Isso evita o Erro 413 (Payload Too Large) do Groq.
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const textContent = await page.getTextContent();
@@ -86,18 +89,17 @@ async function extrairTemasPDF() {
                 textoExtraido += `[PÁGINA ${i}] ` + pageText.substring(0, 300) + "\n";
             }
 
-            // Teto máximo absoluto de segurança para o plano gratuito (aprox. 25.000 caracteres)
             const textoFinal = textoExtraido.substring(0, 25000);
             
-            const prompt = `Atue como um Coordenador Pedagógico de Ciências Humanas.
-            Abaixo estão os títulos e inícios de cada página de um capítulo de material didático.
-            Sua missão é mapear os assuntos e criar uma lista de TEMAS DE AULA.
+            // PROMPT COORDENADOR COM FILTRO DE DISCIPLINA
+            const prompt = `Atue como um Coordenador Pedagógico. Abaixo estão trechos de um material didático.
+            Sua missão é mapear os assuntos e criar uma lista de TEMAS DE AULA focados EXCLUSIVAMENTE nas seguintes disciplinas: ${disciplinasFoco}.
+            Ignore completamente os assuntos de outras disciplinas que não sejam essas.
             
             REGRAS OBRIGATÓRIAS:
-            1. NÃO crie temas genéricos (Exemplo ruim: "Idade Média" ou "Roma").
+            1. NÃO crie temas genéricos (Exemplo ruim: "Idade Média").
             2. CRIE temas compostos, abrangentes e sofisticados, que evidenciem a complexidade da aula (Exemplo bom: "Idade Média: Sociedade, Cultura e Religiosidade").
-            3. Cubra todo o conteúdo do texto.
-            4. Retorne APENAS a lista com os nomes dos temas, um por linha. Não use asteriscos, números ou traços no início. Não escreva textos adicionais.
+            3. Retorne APENAS a lista com os nomes dos temas, um por linha. Não use asteriscos ou números no início.
             
             TEXTO DO MATERIAL:
             ${textoFinal}`;
@@ -114,7 +116,7 @@ async function extrairTemasPDF() {
             });
 
             statusDiv.style.color = "green";
-            statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} temas abrangentes no material.`;
+            statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} temas avançados de ${disciplinasFoco}.`;
         } catch (error) {
             statusDiv.style.color = "red";
             statusDiv.innerText = `❌ Erro: ${error.message}`;
@@ -143,6 +145,14 @@ function gerarCamposDeAula() {
     let dataAtual = new Date(dataInicioInput + "T12:00:00");
     const dataLimite = new Date(dataFimInput + "T12:00:00");
     let contadorAulas = 1;
+
+    // NOVO: Opções de Disciplina individuais
+    const opcoesDisciplina = `
+        <option value="História">História</option>
+        <option value="Filosofia">Filosofia</option>
+        <option value="Sociologia">Sociologia</option>
+        <option value="Geografia">Geografia</option>
+    `;
 
     const opcoesAbordagem = `
         <option value="Expositiva Dialogada">Expositiva Dialogada</option>
@@ -174,6 +184,7 @@ function gerarCamposDeAula() {
                 <input type="hidden" class="numero-aula" value="${contadorAulas}">
                 <div class="aula-controls">
                     <input type="text" class="tema-aula" list="lista-temas-sugeridos" placeholder="Clique ou digite o tema">
+                    <select class="disciplina-aula">${opcoesDisciplina}</select>
                     <select class="abordagem-aula" onchange="toggleOutraAbordagem(this)">${opcoesAbordagem}</select>
                 </div>
                 <input type="text" class="abordagem-outra-aula" placeholder="Digite qual será a abordagem..." style="display: none; margin-top: 10px; width: 100%;">
@@ -254,19 +265,22 @@ async function gerarPlano() {
         const data = el.querySelector('.data-aula').value;
         const tempo = el.querySelector('.tempo-aula').value;
         const tema = el.querySelector('.tema-aula').value;
+        const disciplina = el.querySelector('.disciplina-aula').value; // NOVO: Puxa a disciplina daquela aula
+        
         let abordagem = el.querySelector('.abordagem-aula').value;
         if (abordagem === "Outra") abordagem = el.querySelector('.abordagem-outra-aula').value;
 
         if (tema) {
             btn.innerText = `⏳ Gerando Aula ${id}... (Aguarde)`;
             
-            const prompt = `Aja como um Professor de Ciências Humanas. Escreva o plano APENAS para a aula solicitada abaixo.
+            const prompt = `Aja como um Professor Especialista da disciplina de ${disciplina}. Escreva o plano APENAS para a aula abaixo.
             
             DIRETRIZ DE REDAÇÃO PEDAGÓGICA: 
-            Seja didático e objetivo. Escreva pequenos parágrafos, contendo frases diretas para os Momentos 1, 2 e 3. Descreva a ação do professor e do aluno. Mostre como a abordagem exigida será aplicada.
+            Seja didático e objetivo. Escreva pequenos parágrafos, contendo frases diretas para os Momentos 1, 2 e 3. Descreva a ação do professor e do aluno utilizando a linguagem, os conceitos e a epistemologia própria da disciplina de ${disciplina}. Mostre como a abordagem exigida será aplicada.
             
             AULA A SER GERADA:
             Data: ${data} - Aula ${id}
+            Disciplina: ${disciplina}
             Tema: ${tema}
             Duração: ${tempo} min
             Abordagem Pedagógica: ${abordagem}
@@ -277,7 +291,7 @@ async function gerarPlano() {
             <div class="aula-linha" id="resultado-aula-${id}">
                 <div class="aula-coluna-esq">
                     <strong>${data} - Aula ${id}:</strong><br>
-                    ${tema}<br><br>
+                    ${tema} <br><em>(${disciplina})</em><br><br>
                     <strong>Objetivos:</strong><br>
                     <p>[Objetivos diretos...]</p>
                     <button class="btn-refazer" onclick="refazerAula('${id}')">🔄 Refazer apenas esta aula</button>
@@ -310,6 +324,8 @@ window.refazerAula = async function(idAula) {
     const data = inputBox.querySelector('.data-aula').value;
     const tempo = inputBox.querySelector('.tempo-aula').value;
     const tema = inputBox.querySelector('.tema-aula').value;
+    const disciplina = inputBox.querySelector('.disciplina-aula').value;
+    
     let abordagem = inputBox.querySelector('.abordagem-aula').value;
     if (abordagem === "Outra") abordagem = inputBox.querySelector('.abordagem-outra-aula').value;
 
@@ -321,16 +337,17 @@ window.refazerAula = async function(idAula) {
     btn.innerText = "⏳ Refazendo... Aguarde";
     btn.disabled = true;
 
-    const prompt = `Reescreva o planejamento APENAS desta aula para melhorar a qualidade pedagógica.
-    AULA: ID ${idAula} | Data: ${data} | Tema: ${tema} | Duração: ${tempo} min | Abordagem Exigida: ${abordagem}
+    const prompt = `Aja como um Professor Especialista da disciplina de ${disciplina}. Reescreva o planejamento APENAS desta aula.
     
-    DIRETRIZ DE REDAÇÃO: Escreva um pequeno parágrafo didático e objetivo para cada momento, descrevendo as ações em sala de aula de acordo com a abordagem.
+    AULA: ID ${idAula} | Data: ${data} | Tema: ${tema} | Disciplina: ${disciplina} | Duração: ${tempo} min | Abordagem Exigida: ${abordagem}
+    
+    DIRETRIZ DE REDAÇÃO: Escreva um pequeno parágrafo didático e objetivo para cada momento, descrevendo as ações em sala de aula de acordo com a abordagem, utilizando jargões e metodologias próprias de ${disciplina}.
     
     FORMATO OBRIGATÓRIO (RETORNE APENAS ISSO):
     <div class="aula-linha" id="resultado-aula-${idAula}">
         <div class="aula-coluna-esq">
             <strong>${data} - Aula ${idAula}:</strong><br>
-            ${tema}<br><br>
+            ${tema} <br><em>(${disciplina})</em><br><br>
             <strong>Objetivos:</strong><br>
             <p>[Objetivos...]</p>
             <button class="btn-refazer" onclick="refazerAula('${idAula}')">🔄 Refazer apenas esta aula</button>
