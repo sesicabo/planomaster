@@ -68,7 +68,7 @@ async function extrairTemasPDF() {
     btnExtrair.disabled = true;
     btnExtrair.innerText = "Lendo texto do material... (Aguarde)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Processando as páginas do arquivo...";
+    statusDiv.innerText = "Processando as páginas do arquivo de forma otimizada...";
 
     const reader = new FileReader();
     reader.onload = async function(event) {
@@ -77,27 +77,26 @@ async function extrairTemasPDF() {
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
             let textoExtraido = "";
 
-            // LEITURA DINÂMICA: Pega o resumo (topo) de TODAS as páginas para não perder nenhum assunto
+            // LEITURA CIRÚRGICA: Pega apenas os títulos/subtítulos (primeiros 300 chars) de cada página.
+            // Isso evita o Erro 413 (Payload Too Large) do Groq.
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const textContent = await page.getTextContent();
                 const pageText = textContent.items.map(item => item.str).join(' ');
-                // Extrai apenas os primeiros 1000 caracteres de cada página (onde ficam os títulos)
-                textoExtraido += `[PÁGINA ${i}] ` + pageText.substring(0, 1000) + "\n";
+                textoExtraido += `[PÁGINA ${i}] ` + pageText.substring(0, 300) + "\n";
             }
 
-            // Limite de segurança que passa tranquilo na API do Groq
-            const textoFinal = textoExtraido.substring(0, 40000);
+            // Teto máximo absoluto de segurança para o plano gratuito (aprox. 25.000 caracteres)
+            const textoFinal = textoExtraido.substring(0, 25000);
             
-            // PROMPT COORDENADOR: Exige temas sofisticados
-            const prompt = `Atue como um Coordenador Pedagógico de Ciências Humanas (História, Filosofia, Sociologia).
-            Abaixo estão os trechos principais de cada página de um capítulo de material didático.
-            Sua missão é mapear os assuntos do capítulo inteiro e criar uma lista de TEMAS DE AULA.
+            const prompt = `Atue como um Coordenador Pedagógico de Ciências Humanas.
+            Abaixo estão os títulos e inícios de cada página de um capítulo de material didático.
+            Sua missão é mapear os assuntos e criar uma lista de TEMAS DE AULA.
             
             REGRAS OBRIGATÓRIAS:
-            1. NÃO crie temas rasos, curtos ou genéricos (Exemplo ruim: "Idade Média" ou "Roma").
-            2. CRIE temas compostos, abrangentes e sofisticados, que evidenciem a complexidade da aula (Exemplo bom: "Idade Média: Sociedade, Cultura e Religiosidade" ou "Império Romano: Da Monarquia à República e as Lutas Sociais").
-            3. Cubra todo o conteúdo do texto (da página 1 até a última).
+            1. NÃO crie temas genéricos (Exemplo ruim: "Idade Média" ou "Roma").
+            2. CRIE temas compostos, abrangentes e sofisticados, que evidenciem a complexidade da aula (Exemplo bom: "Idade Média: Sociedade, Cultura e Religiosidade").
+            3. Cubra todo o conteúdo do texto.
             4. Retorne APENAS a lista com os nomes dos temas, um por linha. Não use asteriscos, números ou traços no início. Não escreva textos adicionais.
             
             TEXTO DO MATERIAL:
@@ -109,14 +108,13 @@ async function extrairTemasPDF() {
             const datalist = document.getElementById('lista-temas-sugeridos');
             datalist.innerHTML = '';
             temasSugeridosPDF.forEach(tema => {
-                // Limpa marcações que a IA possa tentar colocar
                 const option = document.createElement('option');
                 option.value = tema.replace(/^[-*0-9.)]+\s*/, '').replace(/[\*\_]/g, '').trim();
                 datalist.appendChild(option);
             });
 
             statusDiv.style.color = "green";
-            statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} temas abrangentes e complexos em todo o capítulo.`;
+            statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} temas abrangentes no material.`;
         } catch (error) {
             statusDiv.style.color = "red";
             statusDiv.innerText = `❌ Erro: ${error.message}`;
