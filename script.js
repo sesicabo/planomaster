@@ -62,7 +62,6 @@ async function extrairTemasPDF() {
     const statusDiv = document.getElementById('status-extracao');
     const btnExtrair = document.getElementById('btn-extrair');
 
-    // Verifica quais disciplinas foram marcadas para filtrar
     const checksDisciplinas = document.querySelectorAll('.filtro-disciplina:checked');
     if (checksDisciplinas.length === 0) return alert("Selecione pelo menos uma disciplina para extrair os temas.");
     const disciplinasFoco = Array.from(checksDisciplinas).map(chk => chk.value).join(', ');
@@ -91,7 +90,6 @@ async function extrairTemasPDF() {
 
             const textoFinal = textoExtraido.substring(0, 25000);
             
-            // PROMPT COORDENADOR COM FILTRO DE DISCIPLINA
             const prompt = `Atue como um Coordenador Pedagógico. Abaixo estão trechos de um material didático.
             Sua missão é mapear os assuntos e criar uma lista de TEMAS DE AULA focados EXCLUSIVAMENTE nas seguintes disciplinas: ${disciplinasFoco}.
             Ignore completamente os assuntos de outras disciplinas que não sejam essas.
@@ -146,12 +144,21 @@ function gerarCamposDeAula() {
     const dataLimite = new Date(dataFimInput + "T12:00:00");
     let contadorAulas = 1;
 
-    // NOVO: Opções de Disciplina individuais
+    // NOVO: Opções de Disciplina com todas as áreas da Educação Básica
     const opcoesDisciplina = `
         <option value="História">História</option>
+        <option value="Geografia">Geografia</option>
         <option value="Filosofia">Filosofia</option>
         <option value="Sociologia">Sociologia</option>
-        <option value="Geografia">Geografia</option>
+        <option value="Português">Português</option>
+        <option value="Literatura">Literatura</option>
+        <option value="Inglês">Inglês</option>
+        <option value="Artes">Artes</option>
+        <option value="Matemática">Matemática</option>
+        <option value="Geometria">Geometria</option>
+        <option value="Física">Física</option>
+        <option value="Química">Química</option>
+        <option value="Biologia">Biologia</option>
     `;
 
     const opcoesAbordagem = `
@@ -265,7 +272,7 @@ async function gerarPlano() {
         const data = el.querySelector('.data-aula').value;
         const tempo = el.querySelector('.tempo-aula').value;
         const tema = el.querySelector('.tema-aula').value;
-        const disciplina = el.querySelector('.disciplina-aula').value; // NOVO: Puxa a disciplina daquela aula
+        const disciplina = el.querySelector('.disciplina-aula').value; 
         
         let abordagem = el.querySelector('.abordagem-aula').value;
         if (abordagem === "Outra") abordagem = el.querySelector('.abordagem-outra-aula').value;
