@@ -40,7 +40,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
                 body: JSON.stringify({
                     model: modelo, 
                     messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.3 
+                    temperature: 0.4 
                 })
             });
 
@@ -237,9 +237,19 @@ async function gerarPlano() {
 
     const aulasInputs = document.querySelectorAll('.aula-item');
     let temasPreenchidos = false;
+    let resumoParaEstrategias = "";
 
     aulasInputs.forEach((el) => {
-        if(el.querySelector('.tema-aula').value) temasPreenchidos = true;
+        const id = el.querySelector('.numero-aula').value;
+        const tema = el.querySelector('.tema-aula').value;
+        let abordagem = el.querySelector('.abordagem-aula').value;
+        if (abordagem === "Outra") abordagem = el.querySelector('.abordagem-outra-aula').value;
+
+        if(tema) {
+            temasPreenchidos = true;
+            // Cria um mini-resumo para a IA gerar as estratégias no final
+            resumoParaEstrategias += `Aula ${id}: Tema "${tema}" - Metodologia: ${abordagem}\n`;
+        }
     });
 
     if(!temasPreenchidos) return alert("Preencha o tema de pelo menos uma aula gerada.");
@@ -250,7 +260,7 @@ async function gerarPlano() {
 
     btn.disabled = true;
 
-    // NOVO: Cabeçalho institucional formato tabela
+    // ESTRUTURA INSTITUCIONAL COM O CONTAINER DE ESTRATÉGIAS NO FINAL
     const cabecalhoOficialHTML = `
         <table class="tabela-cabecalho-oficial">
             <tr>
@@ -288,6 +298,8 @@ async function gerarPlano() {
         <div style="background:#f1f1f1; border:1px solid #000; padding:5px; font-weight:bold; border-bottom:none;">Desenvolvimento da aula e recursos:</div>
         <div id="container-aulas-geradas"></div>
 
+        <div id="container-estrategias-geradas"></div>
+
         <div class="rodape-institucional" id="rodape-pdf" style="display:none; margin-top:20px; border-top:1px solid #000; padding-top:10px; font-size:0.8em; width:100%;">
             <div style="display:flex; justify-content:space-between;">
                 <div>CONTROLADORIA / FORMATIVO</div>
@@ -299,7 +311,9 @@ async function gerarPlano() {
     
     resultadoDiv.innerHTML = cabecalhoOficialHTML;
     const containerAulas = document.getElementById('container-aulas-geradas');
+    const containerEstrategias = document.getElementById('container-estrategias-geradas');
 
+    // 1. GERA AS AULAS INDIVIDUAIS
     for (const el of aulasInputs) {
         const id = el.querySelector('.numero-aula').value;
         const data = el.querySelector('.data-aula').value;
@@ -351,6 +365,41 @@ async function gerarPlano() {
                 containerAulas.innerHTML += `<div class="aula-linha"><div class="aula-coluna-esq" style="color:red; width:100%;">Erro ao gerar a Aula ${id}: ${error.message}</div></div>`;
             }
         }
+    }
+
+    // 2. GERA A SESSÃO FINAL DE ESTRATÉGIAS (A NOVIDADE)
+    btn.innerText = `⏳ Finalizando Estratégias e Evidências...`;
+    
+    const promptEstrategias = `Aja como um Coordenador Pedagógico. Acabamos de planejar uma sequência de aulas. 
+    Baseado no resumo das aulas abaixo, crie a seção final do documento oficial chamada "Estratégias e evidências de aprendizagem".
+    
+    RESUMO DAS AULAS PLANEJADAS:
+    ${resumoParaEstrategias}
+
+    DIRETRIZ DE REDAÇÃO:
+    - Escreva 4 a 5 tópicos (bullet points).
+    - Inicie cada tópico com um título curto em negrito, seguido de uma explicação didática.
+    - O texto deve consolidar as abordagens metodológicas escolhidas nas aulas e mostrar de forma criativa, mas objetiva, como o aprendizado será evidenciado.
+    - O texto deve ser sofisticado e ter autonomia, sem ser gigantesco.
+
+    FORMATO OBRIGATÓRIO (RETORNE APENAS O CÓDIGO HTML ABAIXO PREENCHIDO):
+    <div class="titulo-sessao">Estratégias e evidências de aprendizagem:</div>
+    <div style="border:1px solid #000; border-top:none; padding:15px; margin-bottom: 20px; font-size:0.95em; line-height:1.5; background-color: #fff;">
+        <ul style="margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição didática...]</li>
+            <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição didática...]</li>
+            <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição didática...]</li>
+            <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição didática...]</li>
+        </ul>
+    </div>`;
+
+    try {
+        const estrategiasGeradas = await chamarInteligenciaArtificial(promptEstrategias, null);
+        // Limpa possíveis marcações markdown do código devolvido pela IA
+        const htmlEstrategias = estrategiasGeradas.replace(/```html/gi, '').replace(/```/gi, '').trim();
+        containerEstrategias.innerHTML = htmlEstrategias; 
+    } catch (error) {
+        containerEstrategias.innerHTML = `<div style="color:red; padding:10px;">Erro ao gerar Estratégias: ${error.message}</div>`;
     }
 
     btn.innerText = "🤖 Gerar Plano de Aula Completo com IA";
@@ -416,11 +465,9 @@ function exportarParaPDF() {
     
     const elementoParaImprimir = document.getElementById('container-impressao');
     
-    // Esconde os botões amarelos de "Refazer Aula" para não saírem na impressão
     const botoes = elementoParaImprimir.querySelectorAll('.btn-refazer');
     botoes.forEach(btn => btn.style.display = 'none');
 
-    // Mostra o rodapé oficial
     const rodape = elementoParaImprimir.querySelector('#rodape-pdf');
     if (rodape) rodape.style.display = 'block';
 
@@ -433,7 +480,6 @@ function exportarParaPDF() {
     };
 
     html2pdf().set(configuracao).from(elementoParaImprimir).save().then(() => {
-        // Restaura a visualização padrão na tela
         botoes.forEach(btn => btn.style.display = 'block');
         if (rodape) rodape.style.display = 'none';
         btnExportar.innerText = "📥 Exportar Plano para PDF";
