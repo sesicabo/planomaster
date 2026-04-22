@@ -40,7 +40,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
                 body: JSON.stringify({
                     model: modelo, 
                     messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.5 
+                    temperature: 0.3 // Diminuí a temperatura para ela ser mais "robótica" e seguir regras
                 })
             });
 
@@ -72,7 +72,7 @@ async function extrairTemasPDF() {
     btnExtrair.disabled = true;
     btnExtrair.innerText = "Lendo texto do material... (Aguarde)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Processando as páginas do arquivo...";
+    statusDiv.innerText = "Processando cronologicamente as páginas do arquivo...";
 
     const reader = new FileReader();
     reader.onload = async function(event) {
@@ -90,31 +90,43 @@ async function extrairTemasPDF() {
 
             const textoFinal = textoExtraido.substring(0, 25000);
             
-            const prompt = `Atue como um Coordenador Pedagógico. Abaixo estão trechos de um material didático.
-            Sua missão é mapear os assuntos e criar uma lista de TEMAS DE AULA focados EXCLUSIVAMENTE nas seguintes disciplinas: ${disciplinasFoco}.
-            Ignore completamente os assuntos de outras disciplinas que não sejam essas.
+            // PROMPT BLINDADO: Ordem cronológica e proibição de conversas
+            const prompt = `Atue como um Coordenador Pedagógico. Abaixo estão trechos sequenciais de um material didático.
+            Sua missão é extrair uma lista de TEMAS DE AULA focados EXCLUSIVAMENTE nas disciplinas: ${disciplinasFoco}.
             
-            REGRAS OBRIGATÓRIAS:
-            1. NÃO crie temas genéricos (Exemplo ruim: "Idade Média").
-            2. CRIE temas compostos, abrangentes e sofisticados, que evidenciem a complexidade da aula (Exemplo bom: "Idade Média: Sociedade, Cultura e Religiosidade").
-            3. Retorne APENAS a lista com os nomes dos temas, um por linha. Não use asteriscos ou números no início.
+            REGRAS ABSOLUTAS E INQUEBRÁVEIS:
+            1. ORDEM CRONOLÓGICA: Você DEVE seguir a ordem exata das páginas. O primeiro tema listado deve ser o do início do texto, e assim sucessivamente até o final.
+            2. MODO MÁQUINA (ZERO CONVERSA): NUNCA escreva frases como "Aqui está a lista" ou "Temas de História:". NÃO agrupe por disciplinas. Retorne APENAS os temas diretos, um em cada linha.
+            3. COMPLEXIDADE: Crie temas compostos e sofisticados (Ex: "Idade Média: Sociedade, Cultura e Religiosidade").
             
             TEXTO DO MATERIAL:
             ${textoFinal}`;
 
             const textoGerado = await chamarInteligenciaArtificial(prompt, statusDiv);
-            temasSugeridosPDF = textoGerado.split('\n').filter(tema => tema.trim() !== "");
+            
+            // FILTRO ANTI-LIXO: Remove qualquer frase de introdução ou categorias que a IA tentar forçar
+            temasSugeridosPDF = textoGerado.split('\n').filter(tema => {
+                let t = tema.trim().toLowerCase();
+                if(t === "" || t.includes("aqui está") || t.includes("temas de") || t.includes("focados em") || t.endsWith(":")) {
+                    return false;
+                }
+                return true;
+            });
             
             const datalist = document.getElementById('lista-temas-sugeridos');
             datalist.innerHTML = '';
             temasSugeridosPDF.forEach(tema => {
-                const option = document.createElement('option');
-                option.value = tema.replace(/^[-*0-9.)]+\s*/, '').replace(/[\*\_]/g, '').trim();
-                datalist.appendChild(option);
+                // Limpa números, traços e asteriscos do começo da frase
+                const cleanTema = tema.replace(/^[-*0-9.)]+\s*/, '').replace(/[\*\_]/g, '').trim();
+                if(cleanTema.length > 3) {
+                    const option = document.createElement('option');
+                    option.value = cleanTema;
+                    datalist.appendChild(option);
+                }
             });
 
             statusDiv.style.color = "green";
-            statusDiv.innerText = `✅ Sucesso! Foram encontrados ${temasSugeridosPDF.length} temas avançados de ${disciplinasFoco}.`;
+            statusDiv.innerText = `✅ Sucesso! Foram extraídos ${temasSugeridosPDF.length} temas na ordem cronológica do documento.`;
         } catch (error) {
             statusDiv.style.color = "red";
             statusDiv.innerText = `❌ Erro: ${error.message}`;
@@ -144,7 +156,6 @@ function gerarCamposDeAula() {
     const dataLimite = new Date(dataFimInput + "T12:00:00");
     let contadorAulas = 1;
 
-    // NOVO: Opções de Disciplina com todas as áreas da Educação Básica
     const opcoesDisciplina = `
         <option value="História">História</option>
         <option value="Geografia">Geografia</option>
