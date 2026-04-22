@@ -2,14 +2,11 @@
    VARIÁVEIS DE CORES INSTITUCIONAIS E FUNDO
    ========================================================= */
 :root {
-    --primary-color: #0056b3; /* Azul escuro SESI */
+    --primary-color: #0056b3; 
     --border-color: #dcdcdc;
     --bg-color: #f4f7f6;
 }
 
-/* =========================================================
-   ESTRUTURA BÁSICA E FONTE
-   ========================================================= */
 body {
     font-family: 'Arial', sans-serif;
     background-color: var(--bg-color);
@@ -27,394 +24,121 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* =========================================================
-   CAIXAS DE AGRUPAMENTO (FIELDSETS) E TÍTULOS
-   ========================================================= */
 fieldset {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 25px 20px 20px 20px;
     margin-bottom: 25px;
     background-color: #ffffff;
-    position: relative;
 }
 
-legend {
-    color: var(--primary-color);
-    font-weight: bold;
-    font-size: 1.1em;
-    background-color: #ffffff;
-    padding: 0 10px;
-}
+legend { color: var(--primary-color); font-weight: bold; font-size: 1.1em; background-color: #ffffff; padding: 0 10px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+.form-group { margin-bottom: 15px; }
+label { display: block; font-weight: bold; font-size: 0.9em; margin-bottom: 5px; color: #333; }
 
-/* =========================================================
-   SISTEMA DE GRIDS PARA ALINHAR FORMULÁRIOS LADO A LADO
-   ========================================================= */
-.grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.grid-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    font-weight: bold;
-    font-size: 0.9em;
-    margin-bottom: 5px;
-    color: #333;
-}
-
-/* =========================================================
-   CAMPOS DE TEXTO, SELEÇÃO E CALENDÁRIO
-   ========================================================= */
 input[type="text"], input[type="date"], select, textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1em;
+    width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1em;
 }
-
 input[type="text"]:focus, input[type="date"]:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px rgba(0, 86, 179, 0.2);
+    outline: none; border-color: var(--primary-color); box-shadow: 0 0 5px rgba(0, 86, 179, 0.2);
 }
 
-/* =========================================================
-   ÁREA DE UPLOAD DO PDF E FILTRO DE DISCIPLINAS
-   ========================================================= */
-.pdf-section {
-    border-color: #0ea5e9;
-    background-color: #f0f9ff;
-}
+/* Upload PDF */
+.pdf-section { border-color: #0ea5e9; background-color: #f0f9ff; }
+.pdf-section legend { color: #0284c7; border-color: #0ea5e9; }
+input[type="file"] { background-color: #fff; padding: 8px; border: 1px dashed var(--primary-color); border-radius: 4px; width: 100%; cursor: pointer;}
+.dias-semana { display: flex; gap: 15px; flex-wrap: wrap; }
 
-.pdf-section legend {
-    color: #0284c7;
-    border-color: #0ea5e9;
-}
-
-input[type="file"] {
-    background-color: #fff;
-    padding: 8px;
-    border: 1px dashed var(--primary-color);
-    border-radius: 4px;
-    width: 100%;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-
-/* Caixas de seleção das 13 disciplinas */
-.dias-semana {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap; /* Permite quebrar a linha se a tela for menor */
-}
-
-/* =========================================================
-   BOTÕES DE AÇÃO
-   ========================================================= */
-button {
-    padding: 12px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1em;
-    transition: background 0.3s;
-}
-
-.btn-primary {
-    background-color: var(--primary-color);
-    color: white;
-    width: 100%;
-    margin-top: 15px;
-}
+/* Botões */
+button { padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1em; transition: background 0.3s; }
+.btn-primary { background-color: var(--primary-color); color: white; width: 100%; margin-top: 15px; }
 .btn-primary:hover { background-color: #004085; }
-
-.btn-secondary {
-    background-color: #e2e8f0;
-    color: #333;
-    width: 100%;
-}
+.btn-secondary { background-color: #e2e8f0; color: #333; width: 100%; }
 .btn-secondary:hover { background-color: #cbd5e1; }
 .btn-secondary:disabled { cursor: not-allowed; opacity: 0.7; }
-
-.btn-success {
-    background-color: #198754;
-    color: white;
-}
+.btn-success { background-color: #198754; color: white; }
 .btn-success:hover { background-color: #146c43; }
 
-/* =========================================================
-   HORÁRIO SEMANAL AVANÇADO (DIAS E DURAÇÃO)
-   ========================================================= */
-.dias-semana-avancado {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 15px;
-    margin-bottom: 20px;
-}
+/* Dias e Horários */
+.dias-semana-avancado { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; margin-bottom: 20px; }
+.dia-row { display: flex; align-items: center; background-color: #f8f9fa; padding: 10px 15px; border-radius: 4px; border: 1px solid #e9ecef; }
+.check-container { width: 180px; margin: 0; font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.select-duracao { width: 200px !important; padding: 6px 10px !important; }
+.select-duracao:disabled { background-color: #e9ecef; cursor: not-allowed; }
 
-.dia-row {
-    display: flex;
-    align-items: center;
-    background-color: #f8f9fa;
-    padding: 10px 15px;
-    border-radius: 4px;
-    border: 1px solid #e9ecef;
-}
-
-.check-container {
-    width: 180px;
-    margin: 0;
-    font-weight: normal;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-}
-
-.select-duracao {
-    width: 200px !important;
-    padding: 6px 10px !important;
-}
-
-.select-duracao:disabled {
-    background-color: #e9ecef;
-    cursor: not-allowed;
-}
+/* Caixas de Aulas */
+.aula-item { background-color: #f8f9fa; padding: 15px; border-radius: 4px; border-left: 4px solid var(--primary-color); margin-bottom: 15px; border: 1px solid #ddd;}
+.aula-header { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.tag-duracao { font-size: 0.85em; color: #fff; background-color: #6c757d; padding: 3px 8px; border-radius: 4px; font-weight: normal; }
+.aula-controls { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 10px; }
 
 /* =========================================================
-   CARTÕES INDIVIDUAIS DE CADA AULA (ÁREA DE INPUT)
+   DESIGN PROFISSIONAL DO PLANO GERADO (PADRÃO SESI A4)
    ========================================================= */
-.aula-item {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 4px;
-    border-left: 4px solid var(--primary-color);
-    margin-bottom: 15px;
-    border-top: 1px solid #ddd;
-    border-right: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
+.output-section { margin-top: 30px; border-color: var(--primary-color); }
+#container-impressao { font-family: 'Arial', sans-serif; color: #000; padding: 5px; background: white; }
+
+/* BLOQUEIA CORTES NO MEIO DO PDF */
+.cabecalho-institucional, .tabela-dados-aula, .habilidades-caixa, .aula-linha, .sessao-estrategias {
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
 
-.aula-header {
-    font-weight: bold;
-    color: var(--primary-color);
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+/* CABEÇALHO SESI RECONSTRUÍDO */
+.sesi-top-bar { display: flex; justify-content: flex-end; height: 12px; margin-bottom: 3px; overflow: hidden;}
+.sesi-top-blue { background-color: #004c97; width: 100px; transform: skewX(-30deg); margin-right: 10px; }
+.sesi-top-green { background-color: #8dc63f; width: 30px; transform: skewX(-30deg); margin-right: -10px; }
+.sesi-logo-text { color: #004c97; font-size: 40px; font-weight: 900; font-style: italic; letter-spacing: -2px; }
+.sesi-logo-i { color: #8dc63f; }
 
-.tag-duracao {
-    font-size: 0.85em;
-    color: #fff;
-    background-color: #6c757d;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-weight: normal;
-}
+.tabela-cabecalho-oficial { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+.tabela-cabecalho-oficial td { border: 1px solid #000; padding: 8px; vertical-align: middle; }
+.logo-sesi-box { width: 25%; text-align: center; }
+.titulo-centro-box { width: 50%; text-align: center; line-height: 1.3; }
+.codigo-documento-box { width: 25%; font-size: 0.85em; text-align: center; }
 
-/* Grid com 3 colunas para Tema, Disciplina e Abordagem */
-.aula-controls {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1.5fr;
-    gap: 10px;
-}
+/* Tabelas de Dados */
+.tabela-dados-aula { width: 100%; border: 1px solid #000; border-collapse: collapse; }
+.tabela-dados-aula td { border: 1px solid #000; padding: 8px 10px; font-size: 0.95em; }
 
-/* =========================================================
-   DESIGN PROFISSIONAL DO PLANO GERADO (PADRÃO SESI)
-   ========================================================= */
-.output-section {
-    margin-top: 30px;
-    border-color: var(--primary-color);
-}
+.titulo-sessao { background-color: #f1f1f1; border: 1px solid #000; padding: 8px; font-weight: bold; margin: 15px 0 0 0; border-bottom: none; }
+.habilidades-caixa { border: 1px solid #000; padding: 15px; font-size: 0.95em; line-height: 1.5; margin-bottom: 15px; }
 
-#container-impressao {
-    font-family: 'Arial', sans-serif;
-    color: #000;
-    padding: 10px; /* Margem interna de segurança para o PDF */
-    background: white;
-}
+/* Linhas das Aulas */
+.aula-linha { display: flex; border: 1px solid #000; border-bottom: none; }
+.aula-linha:last-of-type { border-bottom: 1px solid #000; }
+.aula-coluna-esq { width: 30%; padding: 15px; border-right: 1px solid #000; background-color: #fafafa; display: flex; flex-direction: column; }
+.aula-coluna-esq strong { color: #000; font-size: 1.05em;}
+.aula-coluna-esq p { margin: 8px 0; font-size: 0.95em;}
+.aula-coluna-dir { width: 70%; padding: 15px; }
+.aula-coluna-dir p { margin-top: 0; margin-bottom: 12px; font-size: 0.95em; line-height: 1.5; text-align: justify;}
 
-/* Tabelas de Cabeçalho do Documento Institucional */
-.tabela-cabecalho-oficial {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 5px;
-}
+.btn-refazer { background-color: #ffc107; color: #000; border: 1px solid #cc9a06; padding: 8px; font-size: 0.85em; cursor: pointer; font-weight: bold; width: 100%; margin-top: auto; }
+.btn-refazer:hover { background-color: #e0a800; }
+.btn-refazer:disabled { background-color: #f5d778; cursor: wait; }
 
-.tabela-cabecalho-oficial td {
-    border: 1px solid #000;
-    padding: 8px;
-    vertical-align: middle;
-}
-
-.logo-sesi-box {
-    width: 20%;
-    text-align: center;
-    font-weight: bold;
-    font-size: 1.4em;
-}
-
-.titulo-centro-box {
-    width: 50%;
-    text-align: center;
-    line-height: 1.2;
-}
-
-.codigo-documento-box {
-    width: 30%;
-    font-size: 0.8em;
-    text-align: right;
-}
-
-.tabela-dados-aula {
-    width: 100%;
-    border: 1px solid #000;
-    border-collapse: collapse;
-    margin-top: -1px;
-}
-
-.tabela-dados-aula td {
-    border: 1px solid #000;
-    padding: 8px 10px;
-    font-size: 0.95em;
-}
-
-.titulo-sessao {
-    background-color: #f1f1f1;
-    border: 1px solid #000;
-    padding: 8px;
-    font-weight: bold;
-    margin: 15px 0 0 0;
-    border-bottom: none;
-}
-
-.habilidades-caixa {
-    border: 1px solid #000;
-    padding: 15px;
-    margin-bottom: 20px;
-    font-size: 0.95em;
-    line-height: 1.5;
-}
-
-/* =========================================================
-   ESTRUTURA DE CADA AULA GERADA (TABELA DIVIDIDA)
-   ========================================================= */
-.aula-linha {
-    display: flex;
-    border: 1px solid #000;
-    border-bottom: none; /* Evita borda dupla entre aulas */
-}
-
-.aula-linha:last-child {
-    border-bottom: 1px solid #000;
-}
-
-/* Coluna da Esquerda (Informações e Botão Refazer) */
-.aula-coluna-esq {
-    width: 35%;
-    padding: 15px;
-    border-right: 1px solid #000;
-    background-color: #fafafa;
-    display: flex;
-    flex-direction: column;
-}
-
-.aula-coluna-esq strong { 
-    color: #000; 
-    font-size: 1.05em;
-}
-
-.aula-coluna-esq p { 
-    margin: 8px 0; 
-    font-size: 0.95em;
-}
-
-/* Coluna da Direita (Os 3 Momentos Pedagógicos) */
-.aula-coluna-dir {
-    width: 65%;
-    padding: 15px;
-}
-
-.aula-coluna-dir p { 
-    margin-top: 0; 
-    margin-bottom: 12px; 
-    font-size: 0.95em; 
-    line-height: 1.5; 
-    text-align: justify;
-}
-
-/* =========================================================
-   BOTÃO REFAZER AULA E RODAPÉ PDF
-   ========================================================= */
-.btn-refazer {
-    background-color: #ffc107; 
-    color: #000;
-    border: 1px solid #cc9a06;
-    padding: 8px;
-    font-size: 0.85em;
-    cursor: pointer;
-    font-weight: bold;
-    width: 100%;
-    margin-top: auto; 
-    transition: background 0.3s;
-}
-
-.btn-refazer:hover { 
-    background-color: #e0a800; 
-}
-
-.btn-refazer:disabled {
-    background-color: #f5d778;
-    cursor: wait;
-}
-
-.rodape-institucional {
-    display: none; /* Escondido no site, aparece apenas no PDF */
+/* RODAPÉ SESI RECONSTRUÍDO */
+.sesi-footer-container {
     margin-top: 20px;
-    border-top: 1px solid #000;
-    padding-top: 10px;
-    font-size: 0.8em;
-    width: 100%;
+    border-top: 1px dashed #999;
+    padding-top: 15px;
+    padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
+.sesi-seal { width: 45px; height: 45px; border-radius: 50%; border: 3px solid #00a0e3; display: flex; justify-content: center; align-items: center; margin-right: 15px; flex-shrink: 0; }
+.sesi-seal-inner { width: 30px; height: 30px; background-color: #00ed70; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; }
+.sesi-footer-text { color: #666; font-style: italic; font-size: 12px; line-height: 1.4; }
+.sesi-bottom-bar { position: absolute; bottom: 0; left: 0; width: 100%; height: 8px; background-color: #7ab829; }
 
-/* =========================================================
-   RESPONSIVIDADE (Telas menores e celulares)
-   ========================================================= */
 @media (max-width: 768px) {
-    .grid-2, .grid-3 { grid-template-columns: 1fr; }
     .aula-controls { grid-template-columns: 1fr; }
-    
-    /* Quebra o card lado a lado para empilhado no celular */
-    .aula-linha { 
-        flex-direction: column; 
-        border-bottom: 1px solid #000; 
-        margin-bottom: 15px; 
-    }
-    
-    .aula-coluna-esq { 
-        width: 100%; 
-        border-right: none; 
-        border-bottom: 1px solid #000; 
-    }
-    
-    .aula-coluna-dir { 
-        width: 100%; 
-    }
+    .aula-linha { flex-direction: column; border-bottom: 1px solid #000; margin-bottom: 15px; }
+    .aula-coluna-esq { width: 100%; border-right: none; border-bottom: 1px solid #000; }
+    .aula-coluna-dir { width: 100%; }
 }
