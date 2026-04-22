@@ -22,7 +22,8 @@ function toggleOutraAbordagem(selectElement) {
 
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
-    const modelosDisponiveis = ['llama-3.1-8b-instant', 'llama3-8b-8192'];
+    // Mantendo exclusivamente o modelo mais rápido, atualizado e econômico
+    const modelosDisponiveis = ['llama-3.1-8b-instant'];
     let erroFinal = "";
 
     for (const modelo of modelosDisponiveis) {
@@ -222,6 +223,9 @@ function limparMarkdownHTML(textoOriginal) {
     return textoOriginal;
 }
 
+// FUNÇÃO PARA CRIAR A PAUSA ENTRE AS REQUISIÇÕES (Evita o Erro 429)
+const atraso = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function gerarPlano() {
     const unidade = document.getElementById('unidade').value || "SESI";
     const professor = document.getElementById('professor').value || "";
@@ -247,7 +251,6 @@ async function gerarPlano() {
 
         if(tema) {
             temasPreenchidos = true;
-            // Cria um mini-resumo para a IA gerar as estratégias no final
             resumoParaEstrategias += `Aula ${id}: Tema "${tema}" - Metodologia: ${abordagem}\n`;
         }
     });
@@ -260,7 +263,6 @@ async function gerarPlano() {
 
     btn.disabled = true;
 
-    // ESTRUTURA INSTITUCIONAL COM O CONTAINER DE ESTRATÉGIAS NO FINAL
     const cabecalhoOficialHTML = `
         <table class="tabela-cabecalho-oficial">
             <tr>
@@ -313,7 +315,6 @@ async function gerarPlano() {
     const containerAulas = document.getElementById('container-aulas-geradas');
     const containerEstrategias = document.getElementById('container-estrategias-geradas');
 
-    // 1. GERA AS AULAS INDIVIDUAIS
     for (const el of aulasInputs) {
         const id = el.querySelector('.numero-aula').value;
         const data = el.querySelector('.data-aula').value;
@@ -330,7 +331,7 @@ async function gerarPlano() {
             const prompt = `Aja como um Professor Especialista da disciplina de ${disciplina}. Escreva o plano APENAS para a aula abaixo.
             
             DIRETRIZ DE REDAÇÃO PEDAGÓGICA: 
-            Seja didático e objetivo. Escreva pequenos parágrafos, contendo frases diretas para os Momentos 1, 2 e 3. Descreva a ação do professor e do aluno utilizando a linguagem, os conceitos e a epistemologia própria da disciplina de ${disciplina}. Mostre como a abordagem exigida será aplicada.
+            Seja didático e objetivo. Escreva pequenos parágrafos, contendo frases diretas para os Momentos 1, 2 e 3. Descreva a ação do professor e do aluno utilizando a linguagem e os conceitos de ${disciplina}. Mostre como a abordagem exigida será aplicada.
             
             AULA A SER GERADA:
             Data: ${data} - Aula ${id}
@@ -361,14 +362,20 @@ async function gerarPlano() {
                 const textoGerado = await chamarInteligenciaArtificial(prompt, null);
                 const htmlFiltrado = limparMarkdownHTML(textoGerado); 
                 containerAulas.innerHTML += htmlFiltrado; 
+                
+                // O FREIO DE ARRUMAÇÃO: Pausa de 3 segundos para a Groq não bloquear por spam (Erro 429)
+                await atraso(3000); 
+                
             } catch (error) {
                 containerAulas.innerHTML += `<div class="aula-linha"><div class="aula-coluna-esq" style="color:red; width:100%;">Erro ao gerar a Aula ${id}: ${error.message}</div></div>`;
             }
         }
     }
 
-    // 2. GERA A SESSÃO FINAL DE ESTRATÉGIAS (A NOVIDADE)
     btn.innerText = `⏳ Finalizando Estratégias e Evidências...`;
+    
+    // Pausa extra antes de gerar a estratégia final para garantir segurança do limite de tokens
+    await atraso(3000); 
     
     const promptEstrategias = `Aja como um Coordenador Pedagógico. Acabamos de planejar uma sequência de aulas. 
     Baseado no resumo das aulas abaixo, crie a seção final do documento oficial chamada "Estratégias e evidências de aprendizagem".
@@ -379,8 +386,8 @@ async function gerarPlano() {
     DIRETRIZ DE REDAÇÃO:
     - Escreva 4 a 5 tópicos (bullet points).
     - Inicie cada tópico com um título curto em negrito, seguido de uma explicação didática.
-    - O texto deve consolidar as abordagens metodológicas escolhidas nas aulas e mostrar de forma criativa, mas objetiva, como o aprendizado será evidenciado.
-    - O texto deve ser sofisticado e ter autonomia, sem ser gigantesco.
+    - O texto deve consolidar as abordagens metodológicas escolhidas nas aulas e mostrar como o aprendizado será evidenciado.
+    - Seja direto e não exceda no tamanho.
 
     FORMATO OBRIGATÓRIO (RETORNE APENAS O CÓDIGO HTML ABAIXO PREENCHIDO):
     <div class="titulo-sessao">Estratégias e evidências de aprendizagem:</div>
@@ -395,7 +402,6 @@ async function gerarPlano() {
 
     try {
         const estrategiasGeradas = await chamarInteligenciaArtificial(promptEstrategias, null);
-        // Limpa possíveis marcações markdown do código devolvido pela IA
         const htmlEstrategias = estrategiasGeradas.replace(/```html/gi, '').replace(/```/gi, '').trim();
         containerEstrategias.innerHTML = htmlEstrategias; 
     } catch (error) {
