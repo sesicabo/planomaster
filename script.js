@@ -1,5 +1,5 @@
 // ATENÇÃO: Cole sua CHAVE DO GROQ aqui:
-const API_KEY = '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'; 
+const API_KEY = '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'; 
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 let temasSugeridosPDF = [];
