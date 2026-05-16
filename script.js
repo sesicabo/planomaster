@@ -1,20 +1,177 @@
-// ATENÇÃO: Cole sua CHAVE DO GROQ aqui:
-const API_KEY = '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'; 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+// 1. CHAVE DO GROQ (IA GERADORA DE TEXTO)
+const API_KEY = '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'; 
+
+// 2. CONFIGURAÇÃO DO FIREBASE (BANCO DE DADOS E LOGIN)
+const firebaseConfig = {
+  apiKey: "AIzaSyBytvACj5zLOt-RrNOya3E0jqSmGqN_eaY",
+  authDomain: "planomaster2026.firebaseapp.com",
+  projectId: "planomaster2026",
+  storageBucket: "planomaster2026.firebasestorage.app",
+  messagingSenderId: "819423362582",
+  appId: "1:819423362582:web:bcc3f9906d0cd446e23f37"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ==========================================
+// LÓGICA DE LOGIN E CONTROLE DE ACESSO
+// ==========================================
+let isRegistering = false;
+let currentMode = 'login'; // 'login' ou 'register'
+
+function showAuthMessage(msg, type) {
+    const msgDiv = document.getElementById('auth-message');
+    msgDiv.style.display = 'block';
+    msgDiv.className = `auth-message ${type}`;
+    msgDiv.innerText = msg;
+}
+
+window.toggleAuthMode = function() {
+    const title = document.getElementById('auth-title');
+    const subtitle = document.getElementById('auth-subtitle');
+    const btnLogin = document.getElementById('btn-login-action');
+    const btnRegister = document.getElementById('btn-register-action');
+    const toggleText = document.getElementById('auth-toggle-text');
+    const toggleLink = document.getElementById('auth-toggle-link');
+    document.getElementById('auth-message').style.display = 'none';
+
+    if (currentMode === 'login') {
+        currentMode = 'register';
+        title.innerText = "Solicitar Acesso";
+        subtitle.innerText = "Cadastre-se e aguarde a aprovação do admin.";
+        btnLogin.style.display = "none";
+        btnRegister.style.display = "block";
+        toggleText.innerText = "Já tem uma conta?";
+        toggleLink.innerText = "Fazer login";
+    } else {
+        currentMode = 'login';
+        title.innerText = "Acesso ao Sistema";
+        subtitle.innerText = "Faça login para gerar seus planos.";
+        btnLogin.style.display = "block";
+        btnRegister.style.display = "none";
+        toggleText.innerText = "Não tem conta?";
+        toggleLink.innerText = "Solicitar acesso";
+    }
+}
+
+window.fazerCadastro = async function() {
+    const email = document.getElementById('auth-email').value.trim();
+    const pwd = document.getElementById('auth-password').value;
+
+    if (!email || !pwd || pwd.length < 6) {
+        showAuthMessage("Preencha um e-mail válido e uma senha de no mínimo 6 caracteres.", "error");
+        return;
+    }
+
+    isRegistering = true; // Avisa ao sistema para não logar direto
+    document.getElementById('btn-register-action').innerText = "Processando...";
+    document.getElementById('btn-register-action').disabled = true;
+
+    try {
+        const userCred = await createUserWithEmailAndPassword(auth, email, pwd);
+        // Cria a ficha do professor no Banco de Dados como reprovado por padrão
+        await setDoc(doc(db, "usuarios", userCred.user.uid), {
+            email: email,
+            aprovado: false, // ADMIN PRECISA MUDAR ISSO MANUALMENTE
+            data_cadastro: new Date().toISOString()
+        });
+
+        showAuthMessage("Cadastro realizado! O administrador precisa aprovar o seu acesso para você conseguir entrar.", "success");
+        await signOut(auth); // Desloga para ele não acessar o site
+        
+        setTimeout(() => { window.toggleAuthMode(); }, 5000);
+    } catch (error) {
+        showAuthMessage(`Erro: ${error.message}`, "error");
+    } finally {
+        isRegistering = false;
+        document.getElementById('btn-register-action').innerText = "Solicitar Cadastro";
+        document.getElementById('btn-register-action').disabled = false;
+    }
+}
+
+window.fazerLogin = async function() {
+    const email = document.getElementById('auth-email').value.trim();
+    const pwd = document.getElementById('auth-password').value;
+
+    if (!email || !pwd) {
+        showAuthMessage("Preencha e-mail e senha.", "error");
+        return;
+    }
+
+    document.getElementById('btn-login-action').innerText = "Autenticando...";
+    document.getElementById('btn-login-action').disabled = true;
+
+    try {
+        await signInWithEmailAndPassword(auth, email, pwd);
+        // A validação de aprovação acontece no listener abaixo
+    } catch (error) {
+        showAuthMessage(`E-mail ou senha incorretos.`, "error");
+        document.getElementById('btn-login-action').innerText = "Entrar";
+        document.getElementById('btn-login-action').disabled = false;
+    }
+}
+
+window.fazerLogout = async function() {
+    await signOut(auth);
+}
+
+// O VIGILANTE: Observa quem loga e checa a aprovação no banco de dados
+onAuthStateChanged(auth, async (user) => {
+    if (isRegistering) return; // Ignora se estiver no fluxo de criação
+
+    if (user) {
+        showAuthMessage("Verificando status de aprovação...", "info");
+        try {
+            const docSnap = await getDoc(doc(db, "usuarios", user.uid));
+            
+            if (docSnap.exists() && docSnap.data().aprovado === true) {
+                // ACESSO LIBERADO!
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                document.getElementById('user-email-display').innerText = user.email;
+            } else {
+                // ACESSO NEGADO / PENDENTE
+                showAuthMessage("O seu acesso ainda está pendente de aprovação pelo Administrador.", "error");
+                await signOut(auth);
+            }
+        } catch (error) {
+            showAuthMessage("Erro ao consultar banco de dados. Contate o admin.", "error");
+            await signOut(auth);
+        }
+    } else {
+        // Ninguém logado, mostra a tela de login
+        document.getElementById('auth-overlay').style.display = 'flex';
+        document.getElementById('app-content').style.display = 'none';
+        document.getElementById('btn-login-action').innerText = "Entrar";
+        document.getElementById('btn-login-action').disabled = false;
+    }
+});
+
+
+// ==========================================
+// CÓDIGO ORIGINAL DE GERAÇÃO DO PLANO
+// ==========================================
+
+window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 let temasSugeridosPDF = [];
 
-function formatarDataBR(dataString) {
+window.formatarDataBR = function(dataString) {
     const partes = dataString.split('-');
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
 
-function toggleDuracao(checkbox, diaId) {
+window.toggleDuracao = function(checkbox, diaId) {
     const selectDuracao = document.getElementById(`duracao-${diaId}`);
     selectDuracao.disabled = !checkbox.checked;
 }
 
-function toggleOutraAbordagem(selectElement) {
+window.toggleOutraAbordagem = function(selectElement) {
     const inputOutra = selectElement.parentElement.nextElementSibling;
     inputOutra.style.display = (selectElement.value === "Outra") ? "block" : "none";
 }
@@ -56,7 +213,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     throw new Error(`O servidor bloqueou por limite. Detalhes: ${erroFinal}`);
 }
 
-async function extrairTemasPDF() {
+window.extrairTemasPDF = async function() {
     const fileInput = document.getElementById('pdf-upload');
     const statusDiv = document.getElementById('status-extracao');
     const btnExtrair = document.getElementById('btn-extrair');
@@ -69,15 +226,15 @@ async function extrairTemasPDF() {
 
     const file = fileInput.files[0];
     btnExtrair.disabled = true;
-    btnExtrair.innerText = "Lendo texto do material... (Aguarde)";
+    btnExtrair.innerText = "Lendo texto... (Aguarde)";
     statusDiv.style.color = "#0284c7";
-    statusDiv.innerText = "Processando cronologicamente as páginas do arquivo...";
+    statusDiv.innerText = "Processando cronologicamente as páginas...";
 
     const reader = new FileReader();
     reader.onload = async function(event) {
         try {
             const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const pdf = await window.pdfjsLib.getDocument(arrayBuffer).promise;
             let textoExtraido = "";
 
             for (let i = 1; i <= pdf.numPages; i++) {
@@ -93,9 +250,9 @@ async function extrairTemasPDF() {
             Sua missão é extrair uma lista de TEMAS DE AULA focados EXCLUSIVAMENTE nas disciplinas: ${disciplinasFoco}.
             
             REGRAS ABSOLUTAS E INQUEBRÁVEIS:
-            1. ORDEM CRONOLÓGICA: Você DEVE seguir a ordem exata das páginas. O primeiro tema listado deve ser o do início do texto, e assim sucessivamente até o final.
-            2. MODO MÁQUINA (ZERO CONVERSA): NUNCA escreva frases como "Aqui está a lista" ou "Temas de História:". NÃO agrupe por disciplinas. Retorne APENAS os temas diretos, um em cada linha.
-            3. COMPLEXIDADE: Crie temas compostos e sofisticados (Ex: "Idade Média: Sociedade, Cultura e Religiosidade").
+            1. ORDEM CRONOLÓGICA: Siga a ordem exata das páginas do início ao fim.
+            2. MODO MÁQUINA: NUNCA escreva frases introdutórias. NÃO agrupe por disciplinas. Retorne APENAS os temas, um em cada linha.
+            3. COMPLEXIDADE: Crie temas compostos e sofisticados.
             
             TEXTO DO MATERIAL:
             ${textoFinal}`;
@@ -104,9 +261,7 @@ async function extrairTemasPDF() {
             
             temasSugeridosPDF = textoGerado.split('\n').filter(tema => {
                 let t = tema.trim().toLowerCase();
-                if(t === "" || t.includes("aqui está") || t.includes("temas de") || t.includes("focados em") || t.endsWith(":")) {
-                    return false;
-                }
+                if(t === "" || t.includes("aqui está") || t.includes("temas de") || t.includes("focados em") || t.endsWith(":")) return false;
                 return true;
             });
             
@@ -122,19 +277,19 @@ async function extrairTemasPDF() {
             });
 
             statusDiv.style.color = "green";
-            statusDiv.innerText = `✅ Sucesso! Foram extraídos ${temasSugeridosPDF.length} temas na ordem cronológica do documento.`;
+            statusDiv.innerText = `✅ Sucesso! Foram extraídos ${temasSugeridosPDF.length} temas.`;
         } catch (error) {
             statusDiv.style.color = "red";
             statusDiv.innerText = `❌ Erro: ${error.message}`;
         } finally {
-            btnExtrair.innerText = "📄 Extrair Assuntos do PDF";
+            btnExtrair.innerText = "Extrair Assuntos do PDF";
             btnExtrair.disabled = false;
         }
     };
     reader.readAsDataURL(file);
 }
 
-function gerarCamposDeAula() {
+window.gerarCamposDeAula = function() {
     const dataInicioInput = document.getElementById('data-inicio').value;
     const dataFimInput = document.getElementById('data-fim').value;
     if (!dataInicioInput || !dataFimInput) return alert("Preencha o Início e o Fim da Quinzena.");
@@ -197,11 +352,11 @@ function gerarCamposDeAula() {
                 <input type="hidden" class="tempo-aula" value="${tempoAula}">
                 <input type="hidden" class="numero-aula" value="${contadorAulas}">
                 <div class="aula-controls">
-                    <input type="text" class="tema-aula" list="lista-temas-sugeridos" placeholder="Clique ou digite o tema">
-                    <select class="disciplina-aula">${opcoesDisciplina}</select>
-                    <select class="abordagem-aula" onchange="toggleOutraAbordagem(this)">${opcoesAbordagem}</select>
+                    <label>Tema da Aula<input type="text" class="tema-aula" list="lista-temas-sugeridos" placeholder="Clique ou digite o tema"></label>
+                    <label>Disciplina<select class="disciplina-aula">${opcoesDisciplina}</select></label>
+                    <label>Metodologia<select class="abordagem-aula" onchange="toggleOutraAbordagem(this)">${opcoesAbordagem}</select></label>
                 </div>
-                <input type="text" class="abordagem-outra-aula" placeholder="Digite qual será a abordagem..." style="display: none; margin-top: 10px; width: 100%;">
+                <input type="text" class="abordagem-outra-aula input-outra-abordagem" placeholder="Digite qual será a abordagem...">
             `;
             container.appendChild(div);
             contadorAulas++;
@@ -215,15 +370,13 @@ function gerarCamposDeAula() {
 function limparMarkdownHTML(textoOriginal) {
     const inicio = textoOriginal.indexOf('<div class="aula-linha"');
     const fim = textoOriginal.lastIndexOf('</div>');
-    if (inicio !== -1 && fim !== -1) {
-        return textoOriginal.substring(inicio, fim + 6); 
-    }
+    if (inicio !== -1 && fim !== -1) return textoOriginal.substring(inicio, fim + 6); 
     return textoOriginal;
 }
 
 const atraso = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function gerarPlano() {
+window.gerarPlano = async function() {
     const unidade = document.getElementById('unidade').value || "SESI";
     const professor = document.getElementById('professor').value || "";
     const area = document.getElementById('area').value || "";
@@ -260,7 +413,6 @@ async function gerarPlano() {
 
     btn.disabled = true;
 
-    // CABEÇALHO OFICIAL DO SESI APLICADO (FO-SES-EDU-038-00)
     const cabecalhoOficialHTML = `
         <div class="cabecalho-institucional">
             <div class="sesi-top-bar">
@@ -269,33 +421,16 @@ async function gerarPlano() {
             </div>
             <table class="tabela-cabecalho-oficial">
                 <tr>
-                    <td class="logo-sesi-box">
-                        <span class="sesi-logo-text">SES<span class="sesi-logo-i">I</span></span>
-                    </td>
-                    <td class="titulo-centro-box">
-                        <strong>FORMULÁRIO</strong><br>
-                        Planejamento pedagógico
-                    </td>
-                    <td class="codigo-documento-box">
-                        <strong>FO-SES-EDU-038-00</strong><br>
-                    </td>
+                    <td class="logo-sesi-box"><span class="sesi-logo-text">SES<span class="sesi-logo-i">I</span></span></td>
+                    <td class="titulo-centro-box"><strong>FORMULÁRIO</strong><br>Planejamento pedagógico</td>
+                    <td class="codigo-documento-box"><strong>FO-SES-EDU-038-00</strong><br></td>
                 </tr>
             </table>
 
             <table class="tabela-dados-aula">
-                <tr>
-                    <td colspan="2"><strong>Unidade Escolar:</strong> ${unidade}</td>
-                    <td><strong>Professor:</strong> ${professor}</td>
-                </tr>
-                <tr>
-                    <td colspan="2"><strong>Área de conhecimento:</strong> ${area}</td>
-                    <td><strong>Série e Turma:</strong> ${turma}</td>
-                </tr>
-                <tr>
-                    <td><strong>Bimestre:</strong> ${bimestre}</td>
-                    <td><strong>Período:</strong> ${periodoTexto}</td>
-                    <td><strong>Capítulo:</strong> ${capitulo}</td>
-                </tr>
+                <tr><td colspan="2"><strong>Unidade Escolar:</strong> ${unidade}</td><td><strong>Professor:</strong> ${professor}</td></tr>
+                <tr><td colspan="2"><strong>Área de conhecimento:</strong> ${area}</td><td><strong>Série e Turma:</strong> ${turma}</td></tr>
+                <tr><td><strong>Bimestre:</strong> ${bimestre}</td><td><strong>Período:</strong> ${periodoTexto}</td><td><strong>Capítulo:</strong> ${capitulo}</td></tr>
             </table>
         </div>
 
@@ -307,9 +442,7 @@ async function gerarPlano() {
         <div id="container-estrategias-geradas"></div>
 
         <div class="sesi-footer-container" id="rodape-pdf" style="display:none;">
-            <div class="sesi-seal">
-                <div class="sesi-seal-inner">✓</div>
-            </div>
+            <div class="sesi-seal"><div class="sesi-seal-inner">✓</div></div>
             <div class="sesi-footer-text">
                 <strong>CONTROLE NORMATIVO</strong><br>
                 Planejamento pedagógico | FO-SES-EDU-038-00 | ${new Date().toLocaleDateString('pt-BR')}<br>
@@ -333,10 +466,9 @@ async function gerarPlano() {
         if (abordagem === "Outra") abordagem = el.querySelector('.abordagem-outra-aula').value;
 
         if (tema) {
-            btn.innerText = `⏳ Gerando Aula ${id}... (Aguarde)`;
+            btn.innerText = `⏳ Gerando Aula ${id}...`;
             const prompt = `Aja como um Professor Especialista de ${disciplina}. Escreva o plano APENAS para a aula abaixo.
             DIRETRIZ DE REDAÇÃO PEDAGÓGICA: Seja didático e objetivo. Escreva pequenos parágrafos descrevendo a ação do professor e aluno usando conceitos de ${disciplina}.
-            
             AULA: Data: ${data} - Aula ${id} | Disciplina: ${disciplina} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem}
 
             RETORNE APENAS O HTML ABAIXO PREENCHIDO:
@@ -355,8 +487,7 @@ async function gerarPlano() {
 
             try {
                 const textoGerado = await chamarInteligenciaArtificial(prompt, null);
-                const htmlFiltrado = limparMarkdownHTML(textoGerado); 
-                containerAulas.innerHTML += htmlFiltrado; 
+                containerAulas.innerHTML += limparMarkdownHTML(textoGerado); 
                 await atraso(3000); 
             } catch (error) {
                 containerAulas.innerHTML += `<div class="aula-linha"><div class="aula-coluna-esq" style="color:red; width:100%;">Erro: ${error.message}</div></div>`;
@@ -388,7 +519,7 @@ async function gerarPlano() {
         containerEstrategias.innerHTML = `<div style="color:red; padding:10px;">Erro: ${error.message}</div>`;
     }
 
-    btn.innerText = "🤖 Gerar Plano de Aula Completo com IA";
+    btn.innerText = "Gerar Plano de Aula Completo com IA";
     btn.disabled = false;
 }
 
@@ -437,8 +568,7 @@ window.refazerAula = async function(idAula) {
     }
 }
 
-// OTIMIZADO PARA EXPORTAÇÃO A4 SEM CORTAR O LAYOUT E MOSTRANDO O RODAPÉ
-function exportarParaPDF() {
+window.exportarParaPDF = function() {
     const btnExportar = document.getElementById('btn-exportar');
     btnExportar.innerText = "⏳ Preparando PDF...";
     
@@ -447,21 +577,20 @@ function exportarParaPDF() {
     botoes.forEach(btn => btn.style.display = 'none');
 
     const rodape = elementoParaImprimir.querySelector('#rodape-pdf');
-    if (rodape) rodape.style.display = 'flex'; // Exibe o rodapé lindão
+    if (rodape) rodape.style.display = 'flex';
 
     const configuracao = {
         margin:       [10, 10, 10, 10], 
         filename:     'Plano_de_Aula_SESI.pdf',
         image:        { type: 'jpeg', quality: 0.98 },
-        // Força o "windowWidth" simulando uma tela grande para não desconfigurar o Flexbox
         html2canvas:  { scale: 2, useCORS: true, windowWidth: 1000 }, 
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'] } // Respeita as regras do nosso CSS para não cortar
+        pagebreak:    { mode: ['css', 'legacy'] }
     };
 
-    html2pdf().set(configuracao).from(elementoParaImprimir).save().then(() => {
+    window.html2pdf().set(configuracao).from(elementoParaImprimir).save().then(() => {
         botoes.forEach(btn => btn.style.display = 'block');
-        if (rodape) rodape.style.display = 'none'; // Esconde na tela de novo
-        btnExportar.innerText = "📥 Exportar Plano para PDF";
+        if (rodape) rodape.style.display = 'none';
+        btnExportar.innerText = "Exportar para PDF";
     });
 }
