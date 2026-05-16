@@ -3,127 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Planos de Aula - SESI</title>
+    <title>Gerador de Planos de Aula — SESI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <fieldset>
-            <legend>Cabeçalho do Documento</legend>
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Unidade Escolar:</label>
-                    <input type="text" id="unidade" value="SESI – CABO DE SANTO AGOSTINHO">
-                </div>
-                <div class="form-group">
-                    <label>Professor:</label>
-                    <input type="text" id="professor" value="Victor Roberto">
-                </div>
-            </div>
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Área de conhecimento:</label>
-                    <input type="text" id="area" value="CIÊNCIAS HUMANAS E SOCIAIS APLICADAS">
-                </div>
-                <div class="form-group">
-                    <label>Série e Turma:</label>
-                    <input type="text" id="turma" placeholder="Ex: 1º ANO (B)">
-                </div>
-            </div>
-            <div class="grid-3">
-                <div class="form-group">
-                    <label>Bimestre:</label>
-                    <select id="bimestre">
-                        <option value="1º BIMESTRE">1º BIMESTRE</option>
-                        <option value="2º BIMESTRE">2º BIMESTRE</option>
-                        <option value="3º BIMESTRE">3º BIMESTRE</option>
-                        <option value="4º BIMESTRE">4º BIMESTRE</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Início da Quinzena:</label>
-                    <input type="date" id="data-inicio">
-                </div>
-                <div class="form-group">
-                    <label>Fim da Quinzena:</label>
-                    <input type="date" id="data-fim">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Capítulo / Referência:</label>
-                <input type="text" id="capitulo" placeholder="Ex: CADERNO 1 – CAPÍTULO 4">
-            </div>
-        </fieldset>
 
-        <fieldset class="pdf-section">
-            <legend>Material Didático (PDF)</legend>
-            <p style="font-size: 0.9em; color: #555; margin-top: 0;">Anexe o PDF e selecione as disciplinas para a IA extrair temas específicos.</p>
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-card">
+            <div class="sesi-logo-mark" style="text-align: center; margin-bottom: 20px;">
+                <span class="logo-s" style="color:#0D1B2A;">S</span><span class="logo-e" style="color:#0D1B2A;">E</span><span class="logo-s2" style="color:#0D1B2A;">S</span><span class="logo-i">I</span>
+            </div>
+            <h2 id="auth-title">Acesso ao Sistema</h2>
+            <p id="auth-subtitle" style="color: var(--text-secondary); text-align: center; font-size: 0.9rem; margin-bottom: 20px;">Faça login para gerar seus planos.</p>
             
-            <div class="form-group">
-                <label>Extrair temas focados em:</label>
-                <div class="dias-semana" style="margin-bottom: 15px;">
-                    <label class="check-container"><input type="checkbox" value="História" class="filtro-disciplina" checked> História</label>
-                    <label class="check-container"><input type="checkbox" value="Geografia" class="filtro-disciplina"> Geografia</label>
-                    <label class="check-container"><input type="checkbox" value="Filosofia" class="filtro-disciplina" checked> Filosofia</label>
-                    <label class="check-container"><input type="checkbox" value="Sociologia" class="filtro-disciplina"> Sociologia</label>
-                    <label class="check-container"><input type="checkbox" value="Português" class="filtro-disciplina"> Português</label>
-                    <label class="check-container"><input type="checkbox" value="Literatura" class="filtro-disciplina"> Literatura</label>
-                    <label class="check-container"><input type="checkbox" value="Inglês" class="filtro-disciplina"> Inglês</label>
-                    <label class="check-container"><input type="checkbox" value="Artes" class="filtro-disciplina"> Artes</label>
-                    <label class="check-container"><input type="checkbox" value="Matemática" class="filtro-disciplina"> Matemática</label>
-                    <label class="check-container"><input type="checkbox" value="Geometria" class="filtro-disciplina"> Geometria</label>
-                    <label class="check-container"><input type="checkbox" value="Física" class="filtro-disciplina"> Física</label>
-                    <label class="check-container"><input type="checkbox" value="Química" class="filtro-disciplina"> Química</label>
-                    <label class="check-container"><input type="checkbox" value="Biologia" class="filtro-disciplina"> Biologia</label>
+            <div class="field-group">
+                <label class="field-label">E-mail Institucional</label>
+                <input type="email" id="auth-email" class="field-input" placeholder="exemplo@sesi.com">
+            </div>
+            <div class="field-group" style="margin-top: 15px;">
+                <label class="field-label">Senha</label>
+                <input type="password" id="auth-password" class="field-input" placeholder="Mínimo de 6 caracteres">
+            </div>
+
+            <div id="auth-message" class="auth-message" style="display: none;"></div>
+
+            <button id="btn-login-action" class="btn btn--primary btn--block btn--lg" style="margin-top: 20px;" onclick="fazerLogin()">Entrar</button>
+            <button id="btn-register-action" class="btn btn--success btn--block btn--lg" style="margin-top: 20px; display: none;" onclick="fazerCadastro()">Solicitar Cadastro</button>
+
+            <div class="auth-toggle">
+                <span id="auth-toggle-text">Não tem conta?</span>
+                <a href="#" onclick="toggleAuthMode(); return false;" id="auth-toggle-link">Solicitar acesso</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-content" style="display:none;">
+        <header class="app-header">
+            <div class="header-inner">
+                <div class="header-brand">
+                    <div class="sesi-logo-mark">
+                        <span class="logo-s">S</span><span class="logo-e">E</span><span class="logo-s2">S</span><span class="logo-i">I</span>
+                    </div>
+                    <div class="header-brand-text">
+                        <span class="brand-title">Gerador de Planos de Aula</span>
+                        <span class="brand-subtitle">Diretoria de Educação e Cultura</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="header-badge" id="user-email-display" style="text-transform: lowercase; font-weight: 500; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff;">
+                        carregando...
+                    </div>
+                    <button class="btn btn--outline" style="padding: 6px 12px; color: #fff; border-color: rgba(255,255,255,0.3);" onclick="fazerLogout()">Sair</button>
                 </div>
             </div>
+        </header>
 
-            <div class="form-group">
-                <input type="file" id="pdf-upload" accept="application/pdf">
-                <button onclick="extrairTemasPDF()" class="btn-secondary" id="btn-extrair">📄 Extrair Assuntos do PDF</button>
-            </div>
-            <div id="status-extracao" style="font-size: 0.9em; color: var(--primary-color); font-weight: bold;"></div>
-            <datalist id="lista-temas-sugeridos"></datalist>
-        </fieldset>
+        <main class="page-wrapper">
+            <section class="card" data-step="1">
+                <div class="card-header">
+                    <div class="step-indicator">
+                        <div class="step-number">01</div>
+                        <div class="step-info">
+                            <h2 class="step-title">Identificação do Documento</h2>
+                            <p class="step-desc">Dados institucionais e período letivo</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="grid-2">
+                        <div class="field-group">
+                            <label class="field-label">Unidade Escolar</label>
+                            <input type="text" id="unidade" value="SESI – CABO DE SANTO AGOSTINHO" class="field-input">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Professor(a)</label>
+                            <input type="text" id="professor" value="Victor Roberto" class="field-input">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field-group">
+                            <label class="field-label">Área de Conhecimento</label>
+                            <input type="text" id="area" value="CIÊNCIAS HUMANAS E SOCIAIS APLICADAS" class="field-input">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Série e Turma</label>
+                            <input type="text" id="turma" placeholder="Ex: 1º ANO (B)" class="field-input">
+                        </div>
+                    </div>
+                    <div class="grid-3">
+                        <div class="field-group">
+                            <label class="field-label">Bimestre</label>
+                            <select id="bimestre" class="field-input">
+                                <option value="1º BIMESTRE">1º BIMESTRE</option>
+                                <option value="2º BIMESTRE">2º BIMESTRE</option>
+                                <option value="3º BIMESTRE">3º BIMESTRE</option>
+                                <option value="4º BIMESTRE">4º BIMESTRE</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Início da Quinzena</label>
+                            <input type="date" id="data-inicio" class="field-input">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Fim da Quinzena</label>
+                            <input type="date" id="data-fim" class="field-input">
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Capítulo / Referência</label>
+                        <input type="text" id="capitulo" placeholder="Ex: CADERNO 1 – CAPÍTULO 4" class="field-input">
+                    </div>
+                </div>
+            </section>
 
-        <fieldset>
-            <legend>Base Curricular</legend>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label>Habilidades da BNCC/SESI:</label>
-                <textarea id="habilidades" rows="4" placeholder="Ex: SESI.EM13CHS101.d.3 : Identificar os processos histórico-sociais..."></textarea>
-            </div>
-        </fieldset>
+            <section class="card card--accent" data-step="2">
+                <div class="card-header">
+                    <div class="step-indicator">
+                        <div class="step-number step-number--blue">02</div>
+                        <div class="step-info">
+                            <h2 class="step-title">Material Didático <span class="tag-optional">PDF</span></h2>
+                            <p class="step-desc">Anexe o caderno e selecione as disciplinas para extração automática de temas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="field-group">
+                        <label class="field-label">Extrair temas focados em:</label>
+                        <div class="discipline-grid">
+                            <label class="disc-chip"><input type="checkbox" value="História" class="filtro-disciplina" checked><span>História</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Geografia" class="filtro-disciplina"><span>Geografia</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Filosofia" class="filtro-disciplina" checked><span>Filosofia</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Sociologia" class="filtro-disciplina"><span>Sociologia</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Português" class="filtro-disciplina"><span>Português</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Literatura" class="filtro-disciplina"><span>Literatura</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Inglês" class="filtro-disciplina"><span>Inglês</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Artes" class="filtro-disciplina"><span>Artes</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Matemática" class="filtro-disciplina"><span>Matemática</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Geometria" class="filtro-disciplina"><span>Geometria</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Física" class="filtro-disciplina"><span>Física</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Química" class="filtro-disciplina"><span>Química</span></label>
+                            <label class="disc-chip"><input type="checkbox" value="Biologia" class="filtro-disciplina"><span>Biologia</span></label>
+                        </div>
+                    </div>
 
-        <fieldset>
-            <legend>Horário Semanal (Dias de aula nesta turma)</legend>
-            <div class="dias-semana-avancado">
-                <div class="dia-row"><label class="check-container"><input type="checkbox" value="1" class="dia-chk" onchange="toggleDuracao(this, 1)"> Segunda-feira</label><select id="duracao-1" class="select-duracao" disabled><option value="50">50 minutos (1 aula)</option><option value="100">100 minutos (2 aulas)</option></select></div>
-                <div class="dia-row"><label class="check-container"><input type="checkbox" value="2" class="dia-chk" onchange="toggleDuracao(this, 2)"> Terça-feira</label><select id="duracao-2" class="select-duracao" disabled><option value="50">50 minutos (1 aula)</option><option value="100">100 minutos (2 aulas)</option></select></div>
-                <div class="dia-row"><label class="check-container"><input type="checkbox" value="3" class="dia-chk" onchange="toggleDuracao(this, 3)"> Quarta-feira</label><select id="duracao-3" class="select-duracao" disabled><option value="50">50 minutos (1 aula)</option><option value="100">100 minutos (2 aulas)</option></select></div>
-                <div class="dia-row"><label class="check-container"><input type="checkbox" value="4" class="dia-chk" onchange="toggleDuracao(this, 4)"> Quinta-feira</label><select id="duracao-4" class="select-duracao" disabled><option value="50">50 minutos (1 aula)</option><option value="100">100 minutos (2 aulas)</option></select></div>
-                <div class="dia-row"><label class="check-container"><input type="checkbox" value="5" class="dia-chk" onchange="toggleDuracao(this, 5)"> Sexta-feira</label><select id="duracao-5" class="select-duracao" disabled><option value="50">50 minutos (1 aula)</option><option value="100">100 minutos (2 aulas)</option></select></div>
-            </div>
-            <button onclick="gerarCamposDeAula()" class="btn-secondary">📅 Gerar Datas de Aula Automaticamente</button>
-        </fieldset>
+                    <div class="upload-row">
+                        <label class="upload-zone" for="pdf-upload">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                            <span id="upload-label-text">Selecionar arquivo PDF</span>
+                            <input type="file" id="pdf-upload" accept="application/pdf" onchange="document.getElementById('upload-label-text').textContent = this.files[0]?.name || 'Selecionar arquivo PDF'">
+                        </label>
+                        <button onclick="extrairTemasPDF()" class="btn btn--secondary" id="btn-extrair">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            Extrair Assuntos do PDF
+                        </button>
+                    </div>
 
-        <fieldset id="sessao-temas" style="display: none;">
-            <legend>Temas, Disciplina e Metodologia</legend>
-            <div id="aulas-container"></div>
-            <button onclick="gerarPlano()" class="btn-primary" id="btn-gerar">🤖 Gerar Plano de Aula Completo com IA</button>
-        </fieldset>
+                    <div id="status-extracao" class="status-msg" style="display:none;"></div>
+                    <datalist id="lista-temas-sugeridos"></datalist>
+                </div>
+            </section>
 
-        <fieldset class="output-section" id="sessao-resultado" style="display: none;">
-            <legend>Plano de Aula Gerado</legend>
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
-                <button onclick="exportarParaPDF()" class="btn-success" id="btn-exportar" style="width: auto;">📥 Exportar Plano para PDF</button>
+            <section class="card" data-step="3">
+                <div class="card-header">
+                    <div class="step-indicator">
+                        <div class="step-number">03</div>
+                        <div class="step-info">
+                            <h2 class="step-title">Base Curricular</h2>
+                            <p class="step-desc">Habilidades da BNCC / SESI vinculadas ao plano</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="field-group" style="margin-bottom:0">
+                        <label class="field-label">Habilidades da BNCC/SESI</label>
+                        <textarea id="habilidades" rows="4" placeholder="Ex: SESI.EM13CHS101.d.3 : Identificar os processos histórico-sociais..." class="field-input field-textarea"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" data-step="4">
+                <div class="card-header">
+                    <div class="step-indicator">
+                        <div class="step-number">04</div>
+                        <div class="step-info">
+                            <h2 class="step-title">Horário Semanal</h2>
+                            <p class="step-desc">Selecione os dias e a carga horária por aula</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="schedule-grid">
+                        <div class="schedule-row">
+                            <label class="schedule-check">
+                                <input type="checkbox" value="1" class="dia-chk" onchange="toggleDuracao(this, 1)">
+                                <span class="schedule-day">Segunda-feira</span>
+                            </label>
+                            <select id="duracao-1" class="field-input schedule-select" disabled>
+                                <option value="50">50 min — 1 aula</option>
+                                <option value="100">100 min — 2 aulas</option>
+                            </select>
+                        </div>
+                        <div class="schedule-row">
+                            <label class="schedule-check">
+                                <input type="checkbox" value="2" class="dia-chk" onchange="toggleDuracao(this, 2)">
+                                <span class="schedule-day">Terça-feira</span>
+                            </label>
+                            <select id="duracao-2" class="field-input schedule-select" disabled>
+                                <option value="50">50 min — 1 aula</option>
+                                <option value="100">100 min — 2 aulas</option>
+                            </select>
+                        </div>
+                        <div class="schedule-row">
+                            <label class="schedule-check">
+                                <input type="checkbox" value="3" class="dia-chk" onchange="toggleDuracao(this, 3)">
+                                <span class="schedule-day">Quarta-feira</span>
+                            </label>
+                            <select id="duracao-3" class="field-input schedule-select" disabled>
+                                <option value="50">50 min — 1 aula</option>
+                                <option value="100">100 min — 2 aulas</option>
+                            </select>
+                        </div>
+                        <div class="schedule-row">
+                            <label class="schedule-check">
+                                <input type="checkbox" value="4" class="dia-chk" onchange="toggleDuracao(this, 4)">
+                                <span class="schedule-day">Quinta-feira</span>
+                            </label>
+                            <select id="duracao-4" class="field-input schedule-select" disabled>
+                                <option value="50">50 min — 1 aula</option>
+                                <option value="100">100 min — 2 aulas</option>
+                            </select>
+                        </div>
+                        <div class="schedule-row">
+                            <label class="schedule-check">
+                                <input type="checkbox" value="5" class="dia-chk" onchange="toggleDuracao(this, 5)">
+                                <span class="schedule-day">Sexta-feira</span>
+                            </label>
+                            <select id="duracao-5" class="field-input schedule-select" disabled>
+                                <option value="50">50 min — 1 aula</option>
+                                <option value="100">100 min — 2 aulas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="gerarCamposDeAula()" class="btn btn--outline btn--block">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Gerar Datas de Aula Automaticamente
+                    </button>
+                </div>
+            </section>
+
+            <section class="card" id="sessao-temas" style="display: none;" data-step="5">
+                <div class="card-header">
+                    <div class="step-indicator">
+                        <div class="step-number step-number--green">05</div>
+                        <div class="step-info">
+                            <h2 class="step-title">Temas, Disciplina e Metodologia</h2>
+                            <p class="step-desc">Configure cada aula individualmente antes de gerar o plano</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="aulas-container"></div>
+                    <button onclick="gerarPlano()" class="btn btn--primary btn--block btn--lg" id="btn-gerar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        Gerar Plano de Aula Completo com IA
+                    </button>
+                </div>
+            </section>
+
+            <section class="card card--result" id="sessao-resultado" style="display: none;">
+                <div class="card-header">
+                    <div class="step-indicator">
+                        <div class="step-number step-number--success">✓</div>
+                        <div class="step-info">
+                            <h2 class="step-title">Plano de Aula Gerado</h2>
+                            <p class="step-desc">Revise o conteúdo antes de exportar</p>
+                        </div>
+                    </div>
+                    <button onclick="exportarParaPDF()" class="btn btn--success" id="btn-exportar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Exportar para PDF
+                    </button>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div id="container-impressao">
+                        <div id="resultado-plano"></div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="app-footer">
+            <div class="footer-inner">
+                <span>SESI — Serviço Social da Indústria</span>
+                <span class="footer-sep">·</span>
+                <span>Diretoria de Educação e Cultura</span>
+                <span class="footer-sep">·</span>
+                <span>Sistema de Planejamento Pedagógico</span>
             </div>
-            <div id="container-impressao">
-                <div id="resultado-plano"></div>
-            </div>
-        </fieldset>
+        </footer>
     </div>
-    <script src="script.js?v=12"></script>
+
+    <script type="module" src="script.js?v=13"></script>
+    <script>
+        const _origStatus = document.getElementById('status-extracao');
+        const observer = new MutationObserver(() => {
+            _origStatus.style.display = _origStatus.innerText ? 'flex' : 'none';
+        });
+        observer.observe(_origStatus, { childList: true, subtree: true, characterData: true });
+    </script>
 </body>
 </html>
