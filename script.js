@@ -395,4 +395,121 @@ window.gerarPlano = async function() {
 
     aulasInputs.forEach((el) => {
         const id = el.querySelector('.numero-aula').value;
-        const tema = el
+        const tema = el.querySelector('.tema-aula').value.trim();
+        if (tema) temasPreenchidos = true;
+        const disciplina = el.querySelector('.disciplina-aula').value;
+        const abordagemSelect = el.querySelector('.abordagem-aula').value;
+        const abordagemOutra = el.querySelector('.abordagem-outra-aula').value.trim();
+        const abordagem = (abordagemSelect === 'Outra' && abordagemOutra) ? abordagemOutra : abordagemSelect;
+        const data = el.querySelector('.data-aula').value;
+        const tempo = el.querySelector('.tempo-aula').value;
+        resumoParaEstrategias += `Aula ${id} (${data}) – ${disciplina}: "${tema}" | Metodologia: ${abordagem} | Duração: ${tempo} min\n`;
+    });
+
+    if (!temasPreenchidos) return alert("Preencha o tema de pelo menos uma aula.");
+
+    const btnGerar = document.getElementById('btn-gerar');
+    btnGerar.disabled = true;
+    btnGerar.innerText = "Gerando plano com IA... Aguarde.";
+
+    const sessaoResultado = document.getElementById('sessao-resultado');
+    const resultadoPlano = document.getElementById('resultado-plano');
+    sessaoResultado.style.display = 'none';
+    resultadoPlano.innerHTML = '';
+
+    const prompt = `Você é um especialista em planejamento pedagógico. Gere um plano de aula detalhado em HTML, SEM markdown, SEM blocos de código, apenas HTML puro.
+
+DADOS DO PLANO:
+- Unidade: ${unidade}
+- Professor(a): ${professor}
+- Área: ${area}
+- Turma: ${turma}
+- Bimestre: ${bimestre}
+- Período: ${periodoTexto}
+- Capítulo/Referência: ${capitulo}
+- Habilidades/Competências: ${habilidades}
+
+AULAS:
+${resumoParaEstrategias}
+
+FORMATO DE SAÍDA OBRIGATÓRIO:
+Retorne APENAS divs HTML com a estrutura abaixo, uma por aula. Sem DOCTYPE, sem <html>, sem <head>, sem <body>, sem texto fora das divs.
+
+Para CADA aula, gere:
+<div class="aula-linha">
+  <div class="aula-cabecalho">
+    <span class="aula-numero">Aula [N]</span>
+    <span class="aula-data">[DATA]</span>
+    <span class="aula-disciplina">[DISCIPLINA]</span>
+    <span class="aula-duracao">[X] min</span>
+  </div>
+  <div class="aula-tema"><strong>Tema:</strong> [TEMA COMPLETO]</div>
+  <div class="aula-metodologia"><strong>Metodologia:</strong> [METODOLOGIA]</div>
+  <div class="aula-objetivos"><strong>Objetivos:</strong> [objetivos específicos da aula]</div>
+  <div class="aula-desenvolvimento"><strong>Desenvolvimento:</strong> [descrição detalhada das etapas da aula, incluindo abertura, desenvolvimento e fechamento]</div>
+  <div class="aula-recursos"><strong>Recursos:</strong> [recursos didáticos necessários]</div>
+  <div class="aula-avaliacao"><strong>Avaliação:</strong> [forma de avaliação da aprendizagem]</div>
+</div>`;
+
+    try {
+        const statusEl = document.getElementById('btn-gerar');
+        const textoGerado = await chamarInteligenciaArtificial(prompt, { id: 'btn-gerar', innerText: '' });
+        const htmlLimpo = limparMarkdownHTML(textoGerado);
+
+        const cabecalho = `
+        <div class="plano-cabecalho">
+            <div class="plano-logo-area">
+                <div class="sesi-logo-mark" style="font-size:2rem;">
+                    <span class="logo-s">S</span><span class="logo-e">E</span><span class="logo-s2">S</span><span class="logo-i">I</span>
+                </div>
+                <div>
+                    <div style="font-weight:700;font-size:1.1rem;">${unidade}</div>
+                    <div style="font-size:0.85rem;color:#555;">Diretoria de Educação e Cultura</div>
+                </div>
+            </div>
+            <table class="plano-tabela-cabecalho">
+                <tr><td><strong>Professor(a):</strong></td><td>${professor}</td><td><strong>Área:</strong></td><td>${area}</td></tr>
+                <tr><td><strong>Turma:</strong></td><td>${turma}</td><td><strong>Bimestre:</strong></td><td>${bimestre}</td></tr>
+                <tr><td><strong>Período:</strong></td><td>${periodoTexto}</td><td><strong>Capítulo:</strong></td><td>${capitulo}</td></tr>
+            </table>
+            ${habilidades ? `<div class="plano-habilidades"><strong>Habilidades / Competências:</strong><br>${habilidades}</div>` : ''}
+        </div>`;
+
+        resultadoPlano.innerHTML = cabecalho + htmlLimpo;
+        sessaoResultado.style.display = 'block';
+        sessaoResultado.scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+        alert(`Erro ao gerar o plano: ${error.message}`);
+    } finally {
+        btnGerar.disabled = false;
+        btnGerar.innerText = "Gerar Plano de Aula Completo com IA";
+    }
+}
+
+window.exportarParaPDF = async function() {
+    const btnExportar = document.getElementById('btn-exportar');
+    btnExportar.disabled = true;
+    btnExportar.innerText = "Gerando PDF...";
+
+    const elemento = document.getElementById('container-impressao');
+    const professor = document.getElementById('professor').value || "plano";
+    const turma = document.getElementById('turma').value || "turma";
+    const nomeArquivo = `Plano_${professor}_${turma}`.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') + '.pdf';
+
+    const opcoes = {
+        margin: [10, 10, 10, 10],
+        filename: nomeArquivo,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    try {
+        await html2pdf().set(opcoes).from(elemento).save();
+    } catch (error) {
+        alert(`Erro ao exportar PDF: ${error.message}`);
+    } finally {
+        btnExportar.disabled = false;
+        btnExportar.innerText = "Exportar para PDF";
+    }
+}
