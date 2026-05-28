@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Planos de Aula — SESI</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+    <link href="[https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap](https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap)" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js)"></script>
+    <script src="[https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js](https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js)"></script>
 </head>
 <body>
 
+    <!-- TELA DE LOGIN / CADASTRO -->
     <div id="auth-overlay" class="auth-overlay">
         <div class="auth-card">
             <div class="sesi-logo-mark" style="text-align: center; margin-bottom: 20px;">
@@ -42,6 +43,7 @@
         </div>
     </div>
 
+    <!-- SISTEMA PRINCIPAL (INVISÍVEL ATÉ O LOGIN) -->
     <div id="app-content" style="display:none;">
         <header class="app-header">
             <div class="header-inner">
@@ -64,6 +66,7 @@
         </header>
 
         <main class="page-wrapper">
+            <!-- STEP 1: CABEÇALHO -->
             <section class="card" data-step="1">
                 <div class="card-header">
                     <div class="step-indicator">
@@ -121,6 +124,7 @@
                 </div>
             </section>
 
+            <!-- STEP 2: MATERIAL DIDÁTICO -->
             <section class="card card--accent" data-step="2">
                 <div class="card-header">
                     <div class="step-indicator">
@@ -168,6 +172,7 @@
                 </div>
             </section>
 
+            <!-- STEP 3: BASE CURRICULAR -->
             <section class="card" data-step="3">
                 <div class="card-header">
                     <div class="step-indicator">
@@ -186,6 +191,7 @@
                 </div>
             </section>
 
+            <!-- STEP 4: HORÁRIO SEMANAL -->
             <section class="card" data-step="4">
                 <div class="card-header">
                     <div class="step-indicator">
@@ -256,6 +262,7 @@
                 </div>
             </section>
 
+            <!-- STEP 5: TEMAS -->
             <section class="card" id="sessao-temas" style="display: none;" data-step="5">
                 <div class="card-header">
                     <div class="step-indicator">
@@ -275,6 +282,7 @@
                 </div>
             </section>
 
+            <!-- RESULTADO -->
             <section class="card card--result" id="sessao-resultado" style="display: none;">
                 <div class="card-header">
                     <div class="step-indicator">
@@ -312,10 +320,12 @@
     <script type="module" src="script.js?v=15"></script>
     <script>
         const _origStatus = document.getElementById('status-extracao');
-        const observer = new MutationObserver(() => {
-            _origStatus.style.display = _origStatus.innerText ? 'flex' : 'none';
-        });
-        observer.observe(_origStatus, { childList: true, subtree: true, characterData: true });
+        if(_origStatus) {
+            const observer = new MutationObserver(() => {
+                _origStatus.style.display = _origStatus.innerText ? 'flex' : 'none';
+            });
+            observer.observe(_origStatus, { childList: true, subtree: true, characterData: true });
+        }
     </script>
 </body>
 </html>
