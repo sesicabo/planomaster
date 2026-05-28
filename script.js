@@ -371,8 +371,7 @@ function limparFormatacaoSegura(textoOriginal) {
     let htmlLimpo = textoOriginal;
     // Remove as crases do markdown para evitar erros de sintaxe (O pulo do gato para não quebrar a página)
     htmlLimpo = htmlLimpo.split('```html').join('');
-    htmlLimpo = htmlLimpo.split('
-```').join('');
+    htmlLimpo = htmlLimpo.split('\n```').join('');
     
     const inicio = htmlLimpo.indexOf('<div class="');
     const fim = htmlLimpo.lastIndexOf('</div>');
