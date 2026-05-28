@@ -367,12 +367,18 @@ window.gerarCamposDeAula = function() {
     else document.getElementById('sessao-temas').style.display = 'block';
 }
 
-function limparMarkdownHTML(textoOriginal) {
-    // ATUALIZADO PARA O NOVO FORMATO DE CARD
-    const inicio = textoOriginal.indexOf('<div class="aula-card"');
-    const fim = textoOriginal.lastIndexOf('</div>');
-    if (inicio !== -1 && fim !== -1) return textoOriginal.substring(inicio, fim + 6); 
-    return textoOriginal;
+function limparFormatacaoSegura(textoOriginal) {
+    let htmlLimpo = textoOriginal;
+    // Remove as crases do markdown para evitar erros de sintaxe (O pulo do gato para não quebrar a página)
+    htmlLimpo = htmlLimpo.split('```html').join('');
+    htmlLimpo = htmlLimpo.split('
+```').join('');
+    
+    const inicio = htmlLimpo.indexOf('<div class="');
+    const fim = htmlLimpo.lastIndexOf('</div>');
+    if (inicio !== -1 && fim !== -1) return htmlLimpo.substring(inicio, fim + 6); 
+    
+    return htmlLimpo.trim();
 }
 
 const atraso = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -422,7 +428,7 @@ window.gerarPlano = async function() {
             </div>
             <table class="tabela-cabecalho-oficial">
                 <tr>
-                    <td class="logo-sesi-box"><span class="sesi-logo-text">SES<span class="sesi-logo-i">I</span></span></td>
+                    <td class="logo-sesi-box"><span class="sesi-logo-text-doc">SES<span class="sesi-logo-i">I</span></span></td>
                     <td class="titulo-centro-box"><strong>FORMULÁRIO</strong><br>Planejamento pedagógico</td>
                     <td class="codigo-documento-box"><strong>FO-SES-EDU-038-00</strong><br></td>
                 </tr>
@@ -469,21 +475,15 @@ window.gerarPlano = async function() {
         if (tema) {
             btn.innerText = `⏳ Gerando Aula ${id}...`;
             
-            // PROMPT OTIMIZADO PARA EXIGIR APLICAÇÃO REAL DA METODOLOGIA
-            const prompt = `Aja como um Mestre em Educação e Professor conteudista de ${disciplina}.
-            Sua missão é detalhar a aula focando ESTRITAMENTE na Metodologia Exigida: ${abordagem}.
+            const prompt = `Aja como um Professor Especialista de ${disciplina}.
+            Sua missão é detalhar a aula ESTRITAMENTE focado na Metodologia: ${abordagem}.
+            DADOS: Aula ${id} | Disciplina: ${disciplina} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem} | Capítulo: ${capitulo}
 
-            DADOS DA AULA:
-            Data: ${data} - Aula ${id} | Disciplina: ${disciplina} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem} | Capítulo: ${capitulo}
+            DIRETRIZ PEDAGÓGICA (OBRIGATÓRIO):
+            NÃO seja genérico. O desenvolvimento DEVE aplicar a teoria de base de ${abordagem}. 
+            Por exemplo: se for Histórico-Crítica, detalhe Prática Social Inicial, Problematização e Instrumentalização. Se for Construtivista, foque na mediação do professor e desequilíbrio cognitivo do aluno.
 
-            DIRETRIZES PEDAGÓGICAS (MUITO IMPORTANTE):
-            1. NÃO seja genérico. O desenvolvimento da aula DEVE refletir a essência da metodologia escolhida (${abordagem}).
-            - Exemplo 1: Se for Histórico-Crítica, detalhe a Prática Social Inicial, Problematização, Instrumentalização, Catarse e Prática Social Final.
-            - Exemplo 2: Se for Construtivista, foque no desequilíbrio cognitivo, mediação do professor e construção ativa do aluno.
-            - Exemplo 3: Se for Sala de Aula Invertida, especifique o que o aluno trouxe estudado de casa e como o tempo em sala será de debate/aplicação.
-            2. Deixe claro qual é a AÇÃO do PROFESSOR e a AÇÃO do ALUNO em cada momento.
-
-            RETORNE APENAS O HTML ABAIXO PREENCHIDO:
+            RETORNE APENAS O HTML ABAIXO PREENCHIDO. NÃO INCLUA CRASE ( \`\`\` ) NO INÍCIO NEM NO FIM.
             <div class="aula-card" id="resultado-aula-${id}">
                 <div class="aula-card-header">
                     <strong>Aula ${id} - ${data}</strong> | Duração: ${tempo} min | Disciplina: ${disciplina} <br>
@@ -491,21 +491,21 @@ window.gerarPlano = async function() {
                 </div>
                 <div class="aula-card-body">
                     <p><strong>Tema:</strong> ${tema}</p>
-                    <p><strong>Objetivos de Aprendizagem:</strong> [Insira objetivos alinhados com a taxonomia de Bloom...]</p>
+                    <p><strong>Objetivos de Aprendizagem:</strong> [Objetivos alinhados com a taxonomia de Bloom...]</p>
                     <div class="aula-momentos">
-                        <p><strong>1. Abertura / Provocação:</strong> [Ação prática inicial baseada na metodologia ${abordagem}...]</p>
-                        <p><strong>2. Desenvolvimento:</strong> [Prática principal, mediação e construção do conhecimento refletindo a ${abordagem}...]</p>
-                        <p><strong>3. Fechamento / Síntese:</strong> [Como a aula é encerrada e o conhecimento consolidado...]</p>
+                        <p><strong>1. Abertura / Provocação:</strong> [Ação baseada na metodologia...]</p>
+                        <p><strong>2. Desenvolvimento:</strong> [Prática principal, mediação e construção do conhecimento...]</p>
+                        <p><strong>3. Fechamento / Síntese:</strong> [Como a aula é encerrada...]</p>
                     </div>
-                    <p><strong>Recursos Didáticos:</strong> ${capitulo}, [Outros recursos específicos para esta aula...]</p>
-                    <p><strong>Avaliação / Evidência:</strong> [Como o aprendizado será mensurado...]</p>
+                    <p><strong>Recursos Didáticos:</strong> ${capitulo}, [Outros recursos...]</p>
+                    <p><strong>Avaliação / Evidência:</strong> [Avaliação...]</p>
                 </div>
                 <button class="btn-refazer" onclick="refazerAula('${id}')">🔄 Refazer apenas esta aula (Aprofundar Metodologia)</button>
             </div>`;
 
             try {
                 const textoGerado = await chamarInteligenciaArtificial(prompt, null);
-                containerAulas.innerHTML += limparMarkdownHTML(textoGerado); 
+                containerAulas.innerHTML += limparFormatacaoSegura(textoGerado); 
                 await atraso(3000); 
             } catch (error) {
                 containerAulas.innerHTML += `<div class="aula-card"><div class="aula-card-body" style="color:red;">Erro: ${error.message}</div></div>`;
@@ -516,10 +516,11 @@ window.gerarPlano = async function() {
     btn.innerText = `⏳ Finalizando Estratégias e Evidências...`;
     await atraso(3000); 
     
-    const promptEstrategias = `Aja como um Coordenador Pedagógico. Crie a seção final de "Estratégias e evidências" baseada nas aulas geradas.
+    const promptEstrategias = `Aja como um Coordenador Pedagógico. Crie a seção de "Estratégias e evidências" baseada nas aulas geradas:
     RESUMO: ${resumoParaEstrategias}
+    
     DIRETRIZ: Escreva 4 a 5 tópicos curtos. Inicie com um título em negrito.
-    RETORNE APENAS O CÓDIGO HTML ABAIXO PREENCHIDO:
+    RETORNE APENAS O CÓDIGO HTML ABAIXO PREENCHIDO. NÃO INCLUA CRASE ( \`\`\` ) NO INÍCIO NEM NO FIM.
     <div class="sessao-estrategias">
         <div class="titulo-sessao">Estratégias e evidências de aprendizagem:</div>
         <div style="border:1px solid #000; border-top:none; padding:15px; margin-bottom: 20px; font-size:0.95em; line-height:1.5; background-color: #fff;">
@@ -532,8 +533,7 @@ window.gerarPlano = async function() {
 
     try {
         const estrategiasGeradas = await chamarInteligenciaArtificial(promptEstrategias, null);
-        containerEstrategias.innerHTML = estrategiasGeradas.replace(/```html/gi, '').replace(/
-```/gi, '').trim(); 
+        containerEstrategias.innerHTML = limparFormatacaoSegura(estrategiasGeradas); 
     } catch (error) {
         containerEstrategias.innerHTML = `<div style="color:red; padding:10px;">Erro: ${error.message}</div>`;
     }
@@ -562,15 +562,13 @@ window.refazerAula = async function(idAula) {
     btn.innerText = "⏳ Refazendo... Aguarde";
     btn.disabled = true;
 
-    // PROMPT DE REFAZER TAMBÉM ATUALIZADO COM O RIGOR PEDAGÓGICO E NOVO LAYOUT
-    const prompt = `Aja como um Mestre em Educação e Professor conteudista de ${disciplina}. 
+    const prompt = `Aja como um Mestre em Educação de ${disciplina}. 
     Reescreva o planejamento APENAS desta aula focando ESTRITAMENTE na Metodologia: ${abordagem}.
+    DADOS: Aula ${idAula} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem}
     
-    DADOS: ID ${idAula} | Data: ${data} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem}
+    DIRETRIZ: NÃO seja genérico. O desenvolvimento DEVE aplicar a teoria de base de ${abordagem}.
     
-    DIRETRIZ: NÃO seja genérico. O desenvolvimento DEVE aplicar a teoria de base de ${abordagem}. Deixe claro o papel do professor e do aluno.
-    
-    FORMATO OBRIGATÓRIO (RETORNE APENAS ISSO):
+    RETORNE APENAS O HTML ABAIXO PREENCHIDO. NÃO INCLUA CRASE ( \`\`\` ) NO INÍCIO NEM NO FIM.
     <div class="aula-card" id="resultado-aula-${idAula}">
         <div class="aula-card-header">
             <strong>Aula ${idAula} - ${data}</strong> | Duração: ${tempo} min | Disciplina: ${disciplina} <br>
@@ -592,7 +590,7 @@ window.refazerAula = async function(idAula) {
 
     try {
         const textoGerado = await chamarInteligenciaArtificial(prompt, null);
-        cardElement.outerHTML = limparMarkdownHTML(textoGerado); 
+        cardElement.outerHTML = limparFormatacaoSegura(textoGerado); 
     } catch(e) {
         alert("Erro ao refazer: " + e.message);
         btn.innerText = oldText;
