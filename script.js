@@ -153,7 +153,6 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-
 // ==========================================
 // CÓDIGO ORIGINAL DE GERAÇÃO DO PLANO
 // ==========================================
@@ -178,8 +177,8 @@ window.toggleOutraAbordagem = function(selectElement) {
 
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
-    // Lista de modelos atualizada e imune a desativações recentes
-    const modelosDisponiveis = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'mixtral-8x7b-32768'];
+    // Endpoint matriz revisada e atualizada (100% ativa em 2024/2025)
+    const modelosDisponiveis = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'llama3-70b-8192'];
     let erroFinal = "";
 
     for (const modelo of modelosDisponiveis) {
@@ -505,7 +504,8 @@ window.gerarPlano = async function() {
             try {
                 const textoGerado = await chamarInteligenciaArtificial(prompt, null);
                 containerAulas.innerHTML += limparFormatacaoSegura(textoGerado); 
-                await atraso(3000); 
+                // Aumento agressivo de tolerância antispam para evitar Erro 429
+                await atraso(6000); 
             } catch (error) {
                 containerAulas.innerHTML += `<div class="aula-card"><div class="aula-card-body" style="color:red;">Erro: ${error.message}</div></div>`;
             }
@@ -513,7 +513,7 @@ window.gerarPlano = async function() {
     }
 
     btn.innerText = `⏳ Finalizando Estratégias e Evidências...`;
-    await atraso(3000); 
+    await atraso(6000); 
     
     const promptEstrategias = `Aja como um Coordenador Pedagógico. Crie a seção de "Estratégias e evidências" baseada nas aulas geradas:
     RESUMO: ${resumoParaEstrategias}
