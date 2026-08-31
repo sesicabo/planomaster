@@ -177,8 +177,12 @@ window.toggleOutraAbordagem = function(selectElement) {
 
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
-    // Endpoint matriz revisada e atualizada (100% ativa em 2024/2025)
-    const modelosDisponiveis = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'llama3-70b-8192'];
+    // Modelos de PRODUÇÃO ativos no Groq, conferidos ao vivo em console.groq.com/docs/models (31/08/2026).
+    // Os 3 modelos antigos (llama-3.1-8b-instant, gemma2-9b-it, llama3-70b-8192) foram todos
+    // descontinuados pelo Groq — inclusive o llama-3.1-8b-instant, que virou "Enterprise only" em 16/08/2026.
+    // ATENÇÃO: o Groq aposenta modelos com frequência. Se o erro "model_decommissioned" voltar,
+    // confira a lista atual em console.groq.com/docs/deprecations e atualize os IDs abaixo.
+    const modelosDisponiveis = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
     let erroFinal = "";
 
     for (const modelo of modelosDisponiveis) {
@@ -196,7 +200,9 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
                 body: JSON.stringify({
                     model: modelo, 
                     messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.3 
+                    temperature: 0.3,
+                    reasoning_effort: 'low',
+                    include_reasoning: false
                 })
             });
 
@@ -210,7 +216,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
             erroFinal = error.message;
         }
     }
-    throw new Error(`O servidor bloqueou por limite. Detalhes: ${erroFinal}`);
+    throw new Error(`Não foi possível gerar o conteúdo (todos os modelos de IA falharam). Detalhes técnicos: ${erroFinal}`);
 }
 
 window.extrairTemasPDF = async function() {
