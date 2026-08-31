@@ -178,7 +178,8 @@ window.toggleOutraAbordagem = function(selectElement) {
 
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
-    const modelosDisponiveis = ['llama-3.1-8b-instant', 'llama3-8b-8192'];
+    // Lista de modelos atualizada e imune a desativações recentes
+    const modelosDisponiveis = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'mixtral-8x7b-32768'];
     let erroFinal = "";
 
     for (const modelo of modelosDisponiveis) {
@@ -369,7 +370,6 @@ window.gerarCamposDeAula = function() {
 
 function limparFormatacaoSegura(textoOriginal) {
     let htmlLimpo = textoOriginal;
-    // Remove as crases do markdown para evitar erros de sintaxe (O pulo do gato para não quebrar a página)
     htmlLimpo = htmlLimpo.split('```html').join('');
     htmlLimpo = htmlLimpo.split('\n```').join('');
     
