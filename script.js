@@ -177,7 +177,7 @@ window.toggleOutraAbordagem = function(selectElement) {
 
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
-    const modelosDisponiveis = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'llama3-70b-8192'];
+    const modelosDisponiveis = ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-120b'];
     let erroFinal = "";
 
     for (const modelo of modelosDisponiveis) {
@@ -195,7 +195,9 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
                 body: JSON.stringify({
                     model: modelo, 
                     messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.4 
+                    temperature: 0.4,
+                    reasoning_effort: 'low',
+                    max_completion_tokens: 2048
                 })
             });
 
