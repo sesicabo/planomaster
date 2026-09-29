@@ -177,12 +177,7 @@ window.toggleOutraAbordagem = function(selectElement) {
 
 async function chamarInteligenciaArtificial(prompt, statusDivElement) {
     const cleanApiKey = API_KEY.trim();
-    // Modelos de PRODUÇÃO ativos no Groq, conferidos ao vivo em console.groq.com/docs/models (31/08/2026).
-    // Os 3 modelos antigos (llama-3.1-8b-instant, gemma2-9b-it, llama3-70b-8192) foram todos
-    // descontinuados pelo Groq — inclusive o llama-3.1-8b-instant, que virou "Enterprise only" em 16/08/2026.
-    // ATENÇÃO: o Groq aposenta modelos com frequência. Se o erro "model_decommissioned" voltar,
-    // confira a lista atual em console.groq.com/docs/deprecations e atualize os IDs abaixo.
-    const modelosDisponiveis = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
+    const modelosDisponiveis = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'llama3-70b-8192'];
     let erroFinal = "";
 
     for (const modelo of modelosDisponiveis) {
@@ -200,9 +195,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
                 body: JSON.stringify({
                     model: modelo, 
                     messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.3,
-                    reasoning_effort: 'low',
-                    include_reasoning: false
+                    temperature: 0.4 
                 })
             });
 
@@ -216,7 +209,7 @@ async function chamarInteligenciaArtificial(prompt, statusDivElement) {
             erroFinal = error.message;
         }
     }
-    throw new Error(`Não foi possível gerar o conteúdo (todos os modelos de IA falharam). Detalhes técnicos: ${erroFinal}`);
+    throw new Error(`O servidor bloqueou por limite. Detalhes: ${erroFinal}`);
 }
 
 window.extrairTemasPDF = async function() {
@@ -439,7 +432,7 @@ window.gerarPlano = async function() {
             </table>
 
             <table class="tabela-dados-aula">
-                <tr><td colspan="2"><strong>Unidade Escolar:</strong> ${unidade}</td><td><strong>Professor:</strong> ${professor}</td></tr>
+                <tr><td colspan="2"><strong>Unidade Escolar:</strong> ${unidade}</td><td><strong>Professor:</strong>${professor}</td></tr>
                 <tr><td colspan="2"><strong>Área de conhecimento:</strong> ${area}</td><td><strong>Série e Turma:</strong> ${turma}</td></tr>
                 <tr><td><strong>Bimestre:</strong> ${bimestre}</td><td><strong>Período:</strong> ${periodoTexto}</td><td><strong>Capítulo:</strong> ${capitulo}</td></tr>
             </table>
@@ -479,13 +472,20 @@ window.gerarPlano = async function() {
         if (tema) {
             btn.innerText = `⏳ Gerando Aula ${id}...`;
             
-            const prompt = `Aja como um Professor Especialista de ${disciplina}.
-            Sua missão é detalhar a aula ESTRITAMENTE focado na Metodologia: ${abordagem}.
-            DADOS: Aula ${id} | Disciplina: ${disciplina} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem} | Capítulo: ${capitulo}
+            // =========================================================================
+            // O NOVO PROMPT PEDAGÓGICO - REDAÇÃO HUMANA, 1ª PESSOA, METODOLOGIA OCULTA
+            // =========================================================================
+            const prompt = `Atue como EU, um professor apaixonado e especialista da disciplina de ${disciplina}, redigindo o meu próprio plano de aula.
+            Sua missão é detalhar a aula dando vida ao planejamento, focando na Metodologia: ${abordagem}.
 
-            DIRETRIZ PEDAGÓGICA (OBRIGATÓRIO):
-            NÃO seja genérico. O desenvolvimento DEVE aplicar a teoria de base de ${abordagem}. 
-            Por exemplo: se for Histórico-Crítica, detalhe Prática Social Inicial, Problematização e Instrumentalização. Se for Construtivista, foque na mediação do professor e desequilíbrio cognitivo do aluno.
+            DADOS DA AULA:
+            Aula ${id} \vert{} Disciplina:${disciplina} | Tema: ${tema} \vert{} Duração: ${tempo} min | Metodologia Guia: ${abordagem} \vert{} Capítulo: ${capitulo}
+
+            DIRETRIZES PEDAGÓGICAS E DE ESTILO (SIGA RIGOROSAMENTE):
+            1. PRIMEIRA PESSOA: Escreva o texto inteiramente na 1ª pessoa do singular (Ex: "Iniciarei a aula", "Mediarei o debate", "Procurarei instigar os alunos"). NUNCA use "O professor fará". O plano é MEU.
+            2. APLICAÇÃO INVISÍVEL DA METODOLOGIA: Aplique a essência, as etapas e a linguagem da metodologia '${abordagem}' na prática, mas NÃO cite o nome da metodologia nem o nome de teóricos no meio do texto. Mostre a teoria através das ações em sala.
+            3. TEXTO CORRIDO E VIVO: Escreva parágrafos fluidos, atrativos e bem redigidos. Esqueça listas engessadas. Faça com que o plano pareça uma narrativa pedagógica real, humana e objetiva.
+            4. ORTOGRAFIA: Português impecável e sem erros ortográficos.
 
             RETORNE APENAS O HTML ABAIXO PREENCHIDO. NÃO INCLUA CRASE ( \`\`\` ) NO INÍCIO NEM NO FIM.
             <div class="aula-card" id="resultado-aula-${id}">
@@ -495,14 +495,14 @@ window.gerarPlano = async function() {
                 </div>
                 <div class="aula-card-body">
                     <p><strong>Tema:</strong> ${tema}</p>
-                    <p><strong>Objetivos de Aprendizagem:</strong> [Objetivos alinhados com a taxonomia de Bloom...]</p>
+                    <p><strong>Objetivos de Aprendizagem:</strong> [Escreva de forma clara e fluida o que os alunos deverão alcançar com esta aula...]</p>
                     <div class="aula-momentos">
-                        <p><strong>1. Abertura / Provocação:</strong> [Ação baseada na metodologia...]</p>
-                        <p><strong>2. Desenvolvimento:</strong> [Prática principal, mediação e construção do conhecimento...]</p>
-                        <p><strong>3. Fechamento / Síntese:</strong> [Como a aula é encerrada...]</p>
+                        <p><strong>1. Abertura / Provocação:</strong> [Escreva em texto corrido como iniciarei a aula, engajando os alunos...]</p>
+                        <p><strong>2. Desenvolvimento:</strong> [Escreva em texto corrido como conduzirei a prática principal, mediando o conhecimento conforme a metodologia...]</p>
+                        <p><strong>3. Fechamento / Síntese:</strong> [Escreva em texto corrido como finalizarei a aula e consolidarei os saberes...]</p>
                     </div>
-                    <p><strong>Recursos Didáticos:</strong> ${capitulo}, [Outros recursos...]</p>
-                    <p><strong>Avaliação / Evidência:</strong> [Avaliação...]</p>
+                    <p><strong>Recursos Didáticos:</strong> ${capitulo}, [Outros recursos integrados ao que foi descrito acima...]</p>
+                    <p><strong>Avaliação / Evidência:</strong> [Escreva de forma clara como observarei e avaliarei o aprendizado dos meus alunos...]</p>
                 </div>
                 <button class="btn-refazer" onclick="refazerAula('${id}')">🔄 Refazer apenas esta aula (Aprofundar Metodologia)</button>
             </div>`;
@@ -510,7 +510,6 @@ window.gerarPlano = async function() {
             try {
                 const textoGerado = await chamarInteligenciaArtificial(prompt, null);
                 containerAulas.innerHTML += limparFormatacaoSegura(textoGerado); 
-                // Aumento agressivo de tolerância antispam para evitar Erro 429
                 await atraso(6000); 
             } catch (error) {
                 containerAulas.innerHTML += `<div class="aula-card"><div class="aula-card-body" style="color:red;">Erro: ${error.message}</div></div>`;
@@ -521,17 +520,19 @@ window.gerarPlano = async function() {
     btn.innerText = `⏳ Finalizando Estratégias e Evidências...`;
     await atraso(6000); 
     
-    const promptEstrategias = `Aja como um Coordenador Pedagógico. Crie a seção de "Estratégias e evidências" baseada nas aulas geradas:
-    RESUMO: ${resumoParaEstrategias}
+    // O PROMPT DE ESTRATÉGIAS TAMBÉM REFINADO PARA O MESMO TOM HUMANO E VIVO
+    const promptEstrategias = `Atue como EU, o professor, finalizando o meu planejamento. Crie a seção de "Estratégias e evidências de aprendizagem" baseada nas aulas que acabei de gerar:
+    RESUMO DAS AULAS: ${resumoParaEstrategias}
     
-    DIRETRIZ: Escreva 4 a 5 tópicos curtos. Inicie com um título em negrito.
+    DIRETRIZ: Escreva 4 a 5 tópicos atrativos, com linguagem pedagógica fluida e humana. Inicie com um título curto em negrito. Não cite teóricos.
+    
     RETORNE APENAS O CÓDIGO HTML ABAIXO PREENCHIDO. NÃO INCLUA CRASE ( \`\`\` ) NO INÍCIO NEM NO FIM.
     <div class="sessao-estrategias">
         <div class="titulo-sessao">Estratégias e evidências de aprendizagem:</div>
         <div style="border:1px solid #000; border-top:none; padding:15px; margin-bottom: 20px; font-size:0.95em; line-height:1.5; background-color: #fff;">
             <ul style="margin: 0; padding-left: 20px;">
-                <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição...]</li>
-                <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição...]</li>
+                <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição fluida e inteligente da estratégia...]</li>
+                <li style="margin-bottom: 8px;"><strong>[Título Curto]:</strong> [Descrição fluida e inteligente da estratégia...]</li>
             </ul>
         </div>
     </div>`;
@@ -567,11 +568,16 @@ window.refazerAula = async function(idAula) {
     btn.innerText = "⏳ Refazendo... Aguarde";
     btn.disabled = true;
 
-    const prompt = `Aja como um Mestre em Educação de ${disciplina}. 
-    Reescreva o planejamento APENAS desta aula focando ESTRITAMENTE na Metodologia: ${abordagem}.
-    DADOS: Aula ${idAula} | Tema: ${tema} | Duração: ${tempo} min | Abordagem: ${abordagem}
+    // PROMPT DE REFAZER ATUALIZADO COM AS NOVAS DIRETRIZES HUMANAS E DE 1ª PESSOA
+    const prompt = `Atue como EU, um professor apaixonado e especialista da disciplina de ${disciplina}, reescrevendo o meu plano.
+    Sua missão é detalhar a aula dando vida ao planejamento, focando na Metodologia: ${abordagem}.
+
+    DADOS DA AULA: Aula ${idAula} \vert{} Tema:${tema} | Duração: ${tempo} min \vert{} Abordagem:${abordagem}
     
-    DIRETRIZ: NÃO seja genérico. O desenvolvimento DEVE aplicar a teoria de base de ${abordagem}.
+    DIRETRIZES: 
+    1. Escreva na 1ª PESSOA ("Iniciarei", "Conduzirei").
+    2. NÃO seja genérico. Aplique a teoria de base de ${abordagem} nas minhas ações em sala, sem citar o nome do teórico.
+    3. Escreva em texto corrido, fluido e atrativo, sem listas engessadas.
     
     RETORNE APENAS O HTML ABAIXO PREENCHIDO. NÃO INCLUA CRASE ( \`\`\` ) NO INÍCIO NEM NO FIM.
     <div class="aula-card" id="resultado-aula-${idAula}">
@@ -581,14 +587,14 @@ window.refazerAula = async function(idAula) {
         </div>
         <div class="aula-card-body">
             <p><strong>Tema:</strong> ${tema}</p>
-            <p><strong>Objetivos de Aprendizagem:</strong> [Objetivos...]</p>
+            <p><strong>Objetivos de Aprendizagem:</strong> [O que os alunos deverão alcançar...]</p>
             <div class="aula-momentos">
-                <p><strong>1. Abertura / Provocação:</strong> [Ação...]</p>
-                <p><strong>2. Desenvolvimento:</strong> [Prática baseada em ${abordagem}...]</p>
-                <p><strong>3. Fechamento / Síntese:</strong> [Fechamento...]</p>
+                <p><strong>1. Abertura / Provocação:</strong> [Texto corrido de como iniciarei a aula...]</p>
+                <p><strong>2. Desenvolvimento:</strong> [Texto corrido da prática principal...]</p>
+                <p><strong>3. Fechamento / Síntese:</strong> [Texto corrido do fechamento...]</p>
             </div>
             <p><strong>Recursos Didáticos:</strong> ${capitulo}, [Outros recursos...]</p>
-            <p><strong>Avaliação / Evidência:</strong> [Avaliação...]</p>
+            <p><strong>Avaliação / Evidência:</strong> [Como avaliarei o aprendizado...]</p>
         </div>
         <button class="btn-refazer" onclick="refazerAula('${idAula}')">🔄 Refazer apenas esta aula (Aprofundar Metodologia)</button>
     </div>`;
